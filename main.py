@@ -2,12 +2,12 @@ import telebot
 
 
 token = "6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg"
-def user(message):
+def user(message):    #получаем имя пользователя
     if message.from_user.last_name == None:
         return message.from_user.first_name
     return f"{message.from_user.first_name} {message.from_user.last_name}"
 bot = telebot.TeleBot(token)
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start'])    #ответ на команду /start - соо от бота
 def start_message(message):
     bot.send_message(message.chat.id, f"<i>Привет, {user(message)}!</i>"
                                       "\n\nС сегодняшнего дня ты станешь частью невероятного научного эксперимента, "
@@ -22,13 +22,13 @@ def start_message(message):
                                       "\n/contact - через эту команду можно написать нам, создателям игры! Мы всегда ждем отзывов и предложений 🤍"
                                       "\n\n<i>И помни: каждое твое действие имеет последствия…</i>", parse_mode="HTML")
 
-@bot.message_handler(commands=['newgame'])
+@bot.message_handler(commands=['newgame'])    #ответ на команду /newgame - соо от бота с кнопками
 def newgame_message(message):
     bot.send_message(message.chat.id, '*тут было вступление написанное леной но я его случайно удалила. Потом верну*') #вернуть описание и добавить кнопки!!!!!!
-@bot.message_handler(commands=['ab'])
+@bot.message_handler(commands=['ab'])    #ответ на команду /ab - соо от бота
 def ab_message(message):
     bot.send_message(message.chat.id, message) #потом удалить обязательно эту команду
-@bot.message_handler(commands=['contact'])
+@bot.message_handler(commands=['contact'])    #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
 def contact_message(message):
     bot.send_message(message.chat.id, "Если вы хотите поделиться вашими пожеланиями, впечатлениями или предложениями, пожалуйста, напишите их! (следующее ваше одно сообщение будет направлено одному из команды создателей)")
     @bot.message_handler(content_types=['text'])
