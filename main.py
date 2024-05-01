@@ -1,12 +1,14 @@
 import telebot
+from telebot import types
 
-
+ 
 token = "6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg"
 def user(message):    #получаем имя пользователя
     if message.from_user.last_name == None:
         return message.from_user.first_name
     return f"{message.from_user.first_name} {message.from_user.last_name}"
 bot = telebot.TeleBot(token)
+
 @bot.message_handler(commands=['start'])    #ответ на команду /start - соо от бота
 def start_message(message):
     bot.send_message(message.chat.id, f"<i>Привет, {user(message)}!</i>"
@@ -24,10 +26,27 @@ def start_message(message):
 
 @bot.message_handler(commands=['newgame'])    #ответ на команду /newgame - соо от бота с кнопками
 def newgame_message(message):
-    bot.send_message(message.chat.id, '*тут было вступление написанное леной но я его случайно удалила. Потом верну*') #вернуть описание и добавить кнопки!!!!!!
+    markup = types.InlineKeyboardMarkup()
+    button1 = types.InlineKeyboardButton(text='кнопка рас', callback_data='knopochka1')
+    button2 = types.InlineKeyboardButton(text='кнопка два', callback_data='knopochka2')
+    markup.row(button1, button2)
+    photo = open('C:/question.jpg', 'rb')
+    bot.send_photo(message.chat.id, photo)
+    bot.send_message(message.chat.id, '*тут было вступление написанное леной но я его случайно удалила. Потом верну*', reply_markup=markup) #вернуть описание и добавить кнопки!!!!!!
+    audio = open('C:/whatsthat.mp3', 'rb')
+    bot.send_audio(message.chat.id, audio)
+
+@bot.callback_query_handler(func=lambda callback: True)
+def callback_message(callback):
+    if callback.data == 'knopochka1':
+        bot.send_message(callback.message.chat.id, 'вы гений')
+    if callback.data == 'knopochka2':
+        bot.send_message(callback.message.chat.id, 'вы дурачок')  
+
 @bot.message_handler(commands=['ab'])    #ответ на команду /ab - соо от бота
 def ab_message(message):
     bot.send_message(message.chat.id, message) #потом удалить обязательно эту команду
+
 @bot.message_handler(commands=['contact'])    #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
 def contact_message(message):
     bot.send_message(message.chat.id, "Если вы хотите поделиться вашими пожеланиями, впечатлениями или предложениями, пожалуйста, напишите их! (следующее ваше одно сообщение будет направлено одному из команды создателей)")
