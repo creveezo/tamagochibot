@@ -14,10 +14,10 @@ bot = telebot.TeleBot(token)
 @bot.message_handler(commands=['start'])    #ответ на команду /start - соо от бота
 def start_message(message):
 
-    conn = sqlite3.connect('tbdatabase.sql')    #создание бд/подключение к бд, записывание пользователя, если его ещё нет
+    conn = sqlite3.connect('tbdatabase.db')    #создание бд/подключение к бд, записывание пользователя, если его ещё нет
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(50))')
-    cur.execute('INSERT INTO users (name) VALUES ("%s")' % (user(message)))
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, handler varchar(15))')
+    cur.execute(f'INSERT INTO users (id, handler) VALUES ({message.from_user.id}, CURRENT_TIME) ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, handler = CURRENT_TIME')
     conn.commit()
     cur.close()
     conn.close()
@@ -79,7 +79,7 @@ def buttons_callback(callback):
     if callback.data == 'knopochka2':
         bot.send_message(callback.message.chat.id, 'вы дурачок')
     if callback.data == 'users':
-        conn = sqlite3.connect('tbdatabase.sql')
+        conn = sqlite3.connect('tbdatabase.db')
         cur = conn.cursor()
         cur.execute('SELECT * FROM users')   #вся инфа из таблички users
         users = cur.fetchall()
