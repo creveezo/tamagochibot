@@ -1,5 +1,7 @@
 import telebot
+from telebot import types
 import sqlite3
+import time
 
 bot = telebot.TeleBot('6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk')
 
@@ -30,7 +32,7 @@ def contact_message(message):
     bot.send_message(message.chat.id, texts("scenario/commands/contact.txt"))
     @bot.message_handler(content_types=['text'])
     def get_text_messages(message):             #надо всё-таки решить, что эта команда делает и кому сообщение отправляет (или записывает ответы пользователей?)
-        bot.send_message(message.from_user.id, 'Ваше сообщение доставлено!')
+        bot.reply_to(message, 'Ваше сообщение доставлено!')
         bot.send_message(416671069, f'{message.text}, от {user(message)}; ID: {message.from_user.id}')
 
 @bot.message_handler(commands=['newgame'])    #ответ на команду /newgame 
@@ -42,6 +44,44 @@ def newgame_message(message):
     conn.commit()
     cur.close()
     conn.close()
+
+    i = 4
+    for k in range(0,3):
+        i -= 1
+        bot.send_message(message.chat.id, str(i))
+        time.sleep(1)
+    bot.send_message(message.chat.id, "Поехали!")
+    make_action(message, 1, False)
+
+def make_action(message, n: int, NeedPhoto: bool):
+    if n > 4:
+        bot.send_message(message.chat.id, "<i>кто прочитал тот сдох...(с вас 5 рублей)</i>", parse_mode="HTML")
+    else:
+        if n == 4:
+            bot.send_message(message.chat.id, "Ну конечно. На обратной стороне было неприлично много писанины:")
+            time.sleep(2)
+        if NeedPhoto:
+            photo = open(f'scenario/photos/{n}.png', 'rb')
+            bot.send_photo(message.chat.id, photo)
+            time.sleep(5)
+
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(texts(f"scenario/lines_buttons/b{n}.txt"), callback_data="next"))
+        bot.send_message(message.chat.id, texts(f"scenario/lines_direct/{n}.txt"), reply_markup=markup)
+
+
+n = 1
+@bot.callback_query_handler(func=lambda callback: True)
+def buttons_callback(callback):
+    global n
+    if callback.data == "next" and n < 5:
+        n += 1
+        if n in [2, 3, 4]:
+            make_action(callback.message, n, True)
+        else:
+            make_action(callback.message, n, False)
+
+
 
 
 bot.infinity_polling()
