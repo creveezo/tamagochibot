@@ -51,8 +51,8 @@ def newgame_message(message):
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, action_number int, current_time varchar(20), temp1 varchar(50), temp2 varchar(50))')
-    cur.execute(f'INSERT INTO users (id, action_number, current_time, temp1, temp2) VALUES ({message.from_user.id}, 1, CURRENT_TIMESTAMP, 0, 0) \
-                ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, action_number = 1, current_time = CURRENT_TIMESTAMP, temp1 = 0, temp2 = 0')
+    cur.execute('INSERT INTO users (id, action_number, current_time, temp1, temp2) VALUES (?, 1, CURRENT_TIMESTAMP, 0, 0) \
+                ON CONFLICT (id) DO UPDATE SET id = ?, action_number = 1, current_time = CURRENT_TIMESTAMP, temp1 = 0, temp2 = 0', (message.from_user.id, message.from_user.id))
     conn.commit()
     cur.close()
     conn.close()
@@ -61,7 +61,7 @@ def newgame_message(message):
     for k in range(0,3):    # обратный отсчет
         i -= 1
         bot.send_message(message.chat.id, str(i))
-        time.sleep(1)
+        #time.sleep(1)
     bot.send_message(message.chat.id, "Поехали!")
     make_action(message, 1, False)
 
@@ -77,11 +77,11 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
     else:
         if n == 4:
             bot.send_message(message.chat.id, "Ну конечно. На обратной стороне было неприлично много писанины:")
-            time.sleep(2)
+            #time.sleep(2)
         if NeedPhoto:
             photo = open(f'scenario/photos/{n}.png', 'rb')
             bot.send_photo(message.chat.id, photo)
-            time.sleep(5)
+            #time.sleep(5)
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}.txt"), callback_data="next"))
@@ -94,20 +94,20 @@ def choice(message, n):
         markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
     bot.send_message(message.chat.id, texts(f"lines_direct/{n}.txt"), reply_markup=markup)
 
-def get_n(id):
+def get_smth(column, id):   #достать значение из бд
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute(f'SELECT action_number FROM users WHERE id = {id}')
-    n = cur.fetchall()[0][0]
+    cur.execute(f'SELECT {column} FROM users WHERE id = ?', (id,))
+    val = cur.fetchall()[0][0]
     conn.commit()
     cur.close()
     conn.close()
-    return n
+    return val
 
-def push_n(n, id):
+def push_smth(column, value, id):   #записать значение в бд
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute(f'UPDATE users SET action_number = {n} WHERE id = {id}')
+    cur.execute(f'UPDATE users SET {column} = ? WHERE id = ?', (value, id))
     conn.commit()
     cur.close()
     conn.close()
@@ -117,11 +117,11 @@ def push_n(n, id):
 def buttons_callback(callback):
 
     if callback.data == "next":
-        n = get_n(callback.message.chat.id)
+        n = get_smth('action_number', callback.message.chat.id)
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=joiner((f'lines_direct/{n}.txt'), (f'lines_buttons/b{n}.txt')))
         
         n += 1
-        push_n(n, callback.message.chat.id)
+        push_smth('action_number', n, callback.message.chat.id)
 
         if n in [2, 3, 4, 5, 6, 8]:
             make_action(callback.message, n, True)
@@ -142,9 +142,10 @@ def buttons_callback(callback):
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=f"{texts('lines_direct/6.txt')}\nПослушаем музыку!")
     if callback.data in ['music_starting', 'book_starting', 'film_starting']:
-        n = get_n(callback.message.chat.id)
+        n = get_smth('action_number', callback.message.chat.id)
         n += 1
-        push_n(n, callback.message.chat.id)
+        push_smth('action_number', n, callback.message.chat.id)
+        push_smth('temp1', response, callback.message.chat.id)
         make_action(callback.message, n, False)
 
     
@@ -161,10 +162,11 @@ def buttons_callback(callback):
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=f"{texts('lines_direct/10.txt')}\n\n*Долить остатки*")
     if callback.data[-1] == "3":
+        response = get_smth('temp1', callback.message.chat.id)
         bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
-        n = get_n(callback.message.chat.id)
+        n = get_smth('action_number', callback.message.chat.id)
         n += 1
-        push_n(n, callback.message.chat.id)
+        push_smth('action_number', n, callback.message.chat.id)
         make_action(callback.message, n, False)
 
 
