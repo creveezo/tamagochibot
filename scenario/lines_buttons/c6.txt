@@ -1,0 +1,3 @@
+*посмотрим фильм*;film_starting
+*что-нибудь почитаем*;book_starting
+*послушаем музыку*;music_starting
