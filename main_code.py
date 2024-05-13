@@ -50,8 +50,9 @@ def newgame_message(message):
 
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, action_number int, current_time varchar(20))')
-    cur.execute(f'INSERT INTO users (id, action_number, current_time) VALUES ({message.from_user.id}, 1, CURRENT_TIMESTAMP) ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, action_number = 1, current_time = CURRENT_TIMESTAMP')
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, action_number int, current_time varchar(20), temp1 varchar(50), temp2 varchar(50))')
+    cur.execute(f'INSERT INTO users (id, action_number, current_time, temp1, temp2) VALUES ({message.from_user.id}, 1, CURRENT_TIMESTAMP, 0, 0) \
+                ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, action_number = 1, current_time = CURRENT_TIMESTAMP, temp1 = 0, temp2 = 0')
     conn.commit()
     cur.close()
     conn.close()
@@ -103,27 +104,30 @@ def get_n(id):
     conn.close()
     return n
 
+def push_n(n, id):
+    conn = sqlite3.connect('tbdatabase.db')
+    cur = conn.cursor()
+    cur.execute(f'UPDATE users SET action_number = {n} WHERE id = {id}')
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 @bot.callback_query_handler(func=lambda callback: True)
 def buttons_callback(callback):
 
-    n =  get_n(callback.message.chat.id)
-
     if callback.data == "next":
+        n = get_n(callback.message.chat.id)
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=joiner((f'lines_direct/{n}.txt'), (f'lines_buttons/b{n}.txt')))
+        
         n += 1
-
-        conn = sqlite3.connect('tbdatabase.db')
-        cur = conn.cursor()
-        cur.execute(f'UPDATE users SET action_number = {n} WHERE id = {callback.message.chat.id}')
-        conn.commit()
-        cur.close()
-        conn.close()
+        push_n(n, callback.message.chat.id)
 
         if n in [2, 3, 4, 5, 6, 8]:
             make_action(callback.message, n, True)
         else:
             make_action(callback.message, n, False)
+
 
     if callback.data == 'film_starting':
         response = 'глянем. Господи, куда тебе показывать-то...'
@@ -138,8 +142,12 @@ def buttons_callback(callback):
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=f"{texts('lines_direct/6.txt')}\nПослушаем музыку!")
     if callback.data in ['music_starting', 'book_starting', 'film_starting']:
+        n = get_n(callback.message.chat.id)
         n += 1
+        push_n(n, callback.message.chat.id)
         make_action(callback.message, n, False)
+
+    
     if callback.data == 'kind_3':
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=f"{texts('lines_direct/10.txt')}\n\n*Поменять воду*")
@@ -154,7 +162,9 @@ def buttons_callback(callback):
                               text=f"{texts('lines_direct/10.txt')}\n\n*Долить остатки*")
     if callback.data[-1] == "3":
         bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
+        n = get_n(callback.message.chat.id)
         n += 1
+        push_n(n, callback.message.chat.id)
         make_action(callback.message, n, False)
 
 
