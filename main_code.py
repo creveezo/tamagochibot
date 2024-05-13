@@ -106,7 +106,6 @@ def get_n(id):
 
 @bot.callback_query_handler(func=lambda callback: True)
 def buttons_callback(callback):
-    global response
 
     n =  get_n(callback.message.chat.id)
 
