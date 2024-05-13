@@ -75,12 +75,12 @@ n = 1
 def buttons_callback(callback):
     global n
     if callback.data == "next" and n < 5:
+        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=f"{texts(f'scenario/lines_direct/{n}.txt')}\n\n{texts(f'scenario/lines_buttons/b{n}.txt')}")
         n += 1
         if n in [2, 3, 4]:
             make_action(callback.message, n, True)
         else:
             make_action(callback.message, n, False)
-
 
 
 
