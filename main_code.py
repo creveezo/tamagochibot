@@ -93,19 +93,22 @@ def choice(message, n):
         markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
     bot.send_message(message.chat.id, texts(f"lines_direct/{n}.txt"), reply_markup=markup)
 
-
-@bot.callback_query_handler(func=lambda callback: True)
-def buttons_callback(callback):
-    global n
-    global response
-
+def get_n(id):
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute(f'SELECT action_number FROM users WHERE id = {callback.message.chat.id}')
+    cur.execute(f'SELECT action_number FROM users WHERE id = {id}')
     n = cur.fetchall()[0][0]
     conn.commit()
     cur.close()
     conn.close()
+    return n
+
+
+@bot.callback_query_handler(func=lambda callback: True)
+def buttons_callback(callback):
+    global response
+
+    n =  get_n(callback.message.chat.id)
 
     if callback.data == "next":
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=joiner((f'lines_direct/{n}.txt'), (f'lines_buttons/b{n}.txt')))
