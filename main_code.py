@@ -5,7 +5,6 @@ import time
 
 bot = telebot.TeleBot('6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk')
 
-
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
 
@@ -37,10 +36,11 @@ def contact_message(message):
 
 @bot.message_handler(commands=['newgame'])    #ответ на команду /newgame 
 def newgame_message(message):
-    conn = sqlite3.connect('tbdatabase.db')    #создание бд/подключение к бд, записывание пользователя, если его ещё нет
+    
+    conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, handler varchar(15))')
-    cur.execute(f'INSERT INTO users (id, handler) VALUES ({message.from_user.id}, CURRENT_TIME) ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, handler = CURRENT_TIME')
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, action_number int, current_time varchar(20))')
+    cur.execute(f'INSERT INTO users (id, action_number, current_time) VALUES ({message.from_user.id}, 1, CURRENT_TIMESTAMP) ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, action_number = 1, current_time = CURRENT_TIMESTAMP')
     conn.commit()
     cur.close()
     conn.close()
@@ -70,13 +70,28 @@ def make_action(message, n: int, NeedPhoto: bool):
         bot.send_message(message.chat.id, texts(f"scenario/lines_direct/{n}.txt"), reply_markup=markup)
 
 
-n = 1
 @bot.callback_query_handler(func=lambda callback: True)
 def buttons_callback(callback):
-    global n
+    
+    conn = sqlite3.connect('tbdatabase.db')
+    cur = conn.cursor()
+    cur.execute(f'SELECT action_number FROM users WHERE id = {callback.message.chat.id}')
+    n = cur.fetchall()[0][0]
+    conn.commit()
+    cur.close()
+    conn.close()
+
     if callback.data == "next" and n < 5:
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=f"{texts(f'scenario/lines_direct/{n}.txt')}\n\n{texts(f'scenario/lines_buttons/b{n}.txt')}")
         n += 1
+
+        conn = sqlite3.connect('tbdatabase.db')
+        cur = conn.cursor()
+        cur.execute(f'UPDATE users SET action_number = {n} WHERE id = {callback.message.chat.id}')
+        conn.commit()
+        cur.close()
+        conn.close()
+
         if n in [2, 3, 4]:
             make_action(callback.message, n, True)
         else:
