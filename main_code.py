@@ -4,15 +4,17 @@ import sqlite3
 import time
 from datetime import datetime
 
-bot = telebot.TeleBot('6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk')
+catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
+normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
+bot = telebot.TeleBot(catgirl)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
 
 
-def texts(file):        # достаём текст из файла, если есть выборы то делаем словарь {текст кнопки: колбек данные}
+def texts(file: str):        # достаём текст из файла, если есть выборы то делаем словарь {текст кнопки: колбек данные}
     if file.find('lines_buttons/c') != -1:
-        with open(f"scenario/{file}", "r", encoding="UTF-8") as file:
+        with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
             l = file.read().split("\n")
             d = {}
             for line in l:
@@ -20,10 +22,25 @@ def texts(file):        # достаём текст из файла, если е
                 d[button_text] = cb
             return d
     else:
-        with open(f"scenario/{file}", "r", encoding="UTF-8") as file:
+        with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
             return file.read()
 
-def joiner(text1, text2) -> str:       # функция для редактирования сообщений (два фрагмента текста совмещает в один)
+
+def invert(file):
+    if str(file).find('lines_buttons/c') != -1:
+        with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
+            l = file.read().split("\n")
+            d = {}
+            for line in l:
+                button_text, cb = line.split(";")
+                d[cb] = button_text
+            return d
+
+
+
+def joiner(text1, text2, NeedTexts=True) -> str:       # функция для редактирования сообщений (два фрагмента текста совмещает в один)
+    if NeedTexts == False:
+        return f'{text1}\n\n{text2}'
     return f"{texts(text1)}\n\n{texts(text2)}"
 
 def format_replace(line, d):
@@ -34,13 +51,13 @@ def format_replace(line, d):
 
 @bot.message_handler(commands=['start'])  # ответ на команду /start - соо от бота
 def start_message(message):
-    d = {"user":user(message)}
-    bot.send_message(message.chat.id, format_replace(texts("commands/hello.txt"), d), parse_mode="HTML")
+    d = {"user": user(message)}
+    bot.send_message(message.chat.id, format_replace(texts("commands/hello"), d), parse_mode="HTML")
 
 
 @bot.message_handler(commands=['contact'])     #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
 def contact_message(message):
-    bot.send_message(message.chat.id, texts("commands/contact.txt"))
+    bot.send_message(message.chat.id, texts("commands/contact"))
     @bot.message_handler(content_types=['text'])
     def get_text_messages(message):             #надо всё-таки решить, что эта команда делает и кому сообщение отправляет (или записывает ответы пользователей?)
         bot.reply_to(message, 'Ваше сообщение доставлено!')
@@ -90,7 +107,7 @@ def newgame_message(message):
 
 def make_action(message, n: int, NeedPhoto: bool):    # считывает линейные действия
     if n == 10:
-        bot.send_message(message.chat.id, texts("lines_direct/10_1.txt"))
+        bot.send_message(message.chat.id, texts("lines_direct/10_1"))
     # надо не забыть присылать фоту если мы делаем ретерн чойс как у действия 6
     if n in [6, 10]:
         return choice(message, n)
@@ -106,18 +123,18 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
             #time.sleep(5)
 
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}.txt"), callback_data="next"))
-        bot.send_message(message.chat.id, texts(f"lines_direct/{n}.txt"), reply_markup=markup)
+        markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
+        bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup)
 
 
 def choice(message, n):
     markup = types.InlineKeyboardMarkup()
-    for var, cb in texts(f"lines_buttons/c{n}.txt").items():
+    for var, cb in texts(f"lines_buttons/c{n}").items():
         markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
-    bot.send_message(message.chat.id, texts(f"lines_direct/{n}.txt"), reply_markup=markup)
+    bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup)
 
 
-def get_smth(column, id):   #достать значение из бд
+def get_smth(column, id):   # достать значение из бд
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
     cur.execute(f'SELECT {column} FROM users WHERE id = ?', (id,))
@@ -135,7 +152,7 @@ def push_smth(column, value, id):   #записать значение в бд
     cur.close()
     conn.close()
 
-def feed(id):   #кормление
+def feed(id):   # кормление
     fed = get_smth('fed_timestamp', id)
     check = fed_check(fed)
     if check == 'YES':
@@ -149,7 +166,8 @@ def feed(id):   #кормление
         push_smth('fed_timestamp', datetime.now(), id)
         print('спасибо что покормили')
 
-def update_stage(id):   #апдейт стадии
+
+def update_stage(id):   # апдейт стадии
     stage = get_smth('stage', id)
     if stage == 0:
         count = 3
@@ -160,6 +178,7 @@ def update_stage(id):   #апдейт стадии
     stage += 1
     push_smth('stage', stage, id)
     return count
+
 
 def fed_check(fed):    #проверка накормленности и пропусков
     curr = datetime.now()
@@ -180,9 +199,9 @@ def fed_check(fed):    #проверка накормленности и про�
         if lives == 0:
             print('death')
             #стереть строчку из таблицы
-        
+
     return check
-    
+
 
 
 @bot.callback_query_handler(func=lambda callback: True)
@@ -190,8 +209,8 @@ def buttons_callback(callback):
 
     if callback.data == "next":
         n = get_smth('action_number', callback.message.chat.id)
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id, text=joiner((f'lines_direct/{n}.txt'), (f'lines_buttons/b{n}.txt')))
-        
+        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                              text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'))
         n += 1
         push_smth('action_number', n, callback.message.chat.id)
 
@@ -200,46 +219,46 @@ def buttons_callback(callback):
         else:
             make_action(callback.message, n, False)
 
+    amusement = ["film", "book", "music"]
+    for amuse in amusement:
+        if callback.data.find(amuse) != -1:
+            if callback.data == f"{amuse}_starting":
+                response = texts(f'amusement/{callback.data}')
+                bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                      text=joiner('lines_direct/6', f'amusement/{callback.data}_editor'))
+                n = get_smth('action_number', callback.message.chat.id)
+                n += 1
+                push_smth('action_number', n, callback.message.chat.id)
+                push_smth('temp1', response, callback.message.chat.id)
+                push_smth('temp2', amuse, callback.message.chat.id)
+                make_action(callback.message, n, False)
 
-    if callback.data == 'film_starting':
-        response = 'глянем. Господи, куда тебе показывать-то...'
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/6.txt')}\nПосмотрим фильм!")
-    if callback.data == 'book_starting':
-        response = 'почитаем.'
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/6.txt')}\nЧто-нибудь почитаем!")
-    if callback.data == 'music_starting':
-        response = 'послушаем.'
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/6.txt')}\nПослушаем музыку!")
-    if callback.data in ['music_starting', 'book_starting', 'film_starting']:
-        n = get_smth('action_number', callback.message.chat.id)
-        n += 1
-        push_smth('action_number', n, callback.message.chat.id)
-        push_smth('temp1', response, callback.message.chat.id)
-        make_action(callback.message, n, False)
 
-    
-    if callback.data == 'kind_3':
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/10.txt')}\n\n*Поменять воду*")
-        res = 'Надеюсь, что обошлось.'
-    if callback.data == 'cringe_3':
-        res = 'И так сойдёт.'
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/10.txt')}\n\n*Оставить как есть*")
-    if callback.data == 'evil_3':
-        res = 'В целом, ему нужнее.'
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=f"{texts('lines_direct/10.txt')}\n\n*Долить остатки*")
-    if callback.data[-1] == "3":
-        response = get_smth('temp1', callback.message.chat.id)
-        bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
-        n = get_smth('action_number', callback.message.chat.id)
-        n += 1
-        push_smth('action_number', n, callback.message.chat.id)
-        make_action(callback.message, n, False)
+    scale_types = ["kind", "cringe", "evil"]
+    for scale in scale_types:
+        if callback.data.find(scale) != -1:
+            if callback.data == f"{scale}_starting":
+                n = get_smth('action_number', callback.message.chat.id)
+                res = texts(f'temp/{callback.data}')
+                bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                      text=joiner(texts('lines_direct/10'), invert(f'lines_buttons/c{n}')[callback.data], False))
+                response = get_smth('temp1', callback.message.chat.id)
+                bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
+
+
+                n += 1
+                push_smth('action_number', n, callback.message.chat.id)
+                make_action(callback.message, n, False)
+                bot.send_message(callback.message.chat.id, "тут будет выбор из трех но пока его нет но он будет")
+                amuse = get_smth('temp2', callback.message.chat.id)
+                if amuse == "film":
+                    lenth = "3 часа"
+                elif amuse == "youtube":
+                    lenth = "2 часа"
+                else:
+                    lenth = "полтора часа"
+                bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {lenth}...")
+            #scale += callback.data[-1]
 
 
 bot.infinity_polling()
