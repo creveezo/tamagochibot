@@ -6,7 +6,7 @@ from datetime import datetime
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(catgirl)
+bot = telebot.TeleBot(normal)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
@@ -70,14 +70,14 @@ def newgame_message(message):
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS users \
                 (id varchar(16) PRIMARY KEY, stage int, feedings_till_update int, action_number int, \
-                good_count_loc int, evil_count_loc int, cringe_count_loc int, \
-                good_count_abs int, evil_count_abs int, cringe_count_abs int, \
+                kind_count_loc int, evil_count_loc int, cringe_count_loc int, \
+                kind_count_abs int, evil_count_abs int, cringe_count_abs int, \
                 lives int, fed_timestamp varchar(30), \
                 temp1 varchar(50), temp2 varchar(50), training_complete int)')
     cur.execute('INSERT INTO users \
                 (id, stage, feedings_till_update, action_number, \
-                good_count_loc, evil_count_loc, cringe_count_loc, \
-                good_count_abs, evil_count_abs, cringe_count_abs, \
+                kind_count_loc, evil_count_loc, cringe_count_loc, \
+                kind_count_abs, evil_count_abs, cringe_count_abs, \
                 lives, fed_timestamp, \
                 temp1, temp2, training_complete) \
                 VALUES (?, 0, 2, 1, \
@@ -87,8 +87,8 @@ def newgame_message(message):
                 0, 0, 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
-                good_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
-                good_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
+                kind_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
+                kind_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
                 lives = 3, fed_timestamp = ?, \
                 temp1 = 0, temp2 = 0, training_complete = 0', \
                 (message.from_user.id, datetime.now(), message.from_user.id, datetime.now()))
