@@ -50,9 +50,28 @@ def newgame_message(message):
 
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, action_number int, current_time varchar(20), temp1 varchar(50), temp2 varchar(50))')
-    cur.execute('INSERT INTO users (id, action_number, current_time, temp1, temp2) VALUES (?, 1, CURRENT_TIMESTAMP, 0, 0) \
-                ON CONFLICT (id) DO UPDATE SET id = ?, action_number = 1, current_time = CURRENT_TIMESTAMP, temp1 = 0, temp2 = 0', (message.from_user.id, message.from_user.id))
+    cur.execute('CREATE TABLE IF NOT EXISTS users \
+                (id varchar(16) PRIMARY KEY, stage int, feedings_till_update int, action_number int, \
+                good_count_loc int, evil_count_loc int, cringe_count_loc int, \
+                good_count_abs int, evil_count_abs int, cringe_count_abs int, \
+                lives int, already_fed int, \
+                temp1 varchar(50), temp2 varchar(50), training_complete int)')
+    cur.execute('INSERT INTO users \
+                (id, stage, feedings_till_update, action_number, \
+                good_count_loc, evil_count_loc, cringe_count_loc, \
+                good_count_abs, evil_count_abs, cringe_count_abs, \
+                lives, already_fed, \
+                temp1, temp2, training_complete) \
+                VALUES (?, 0, 2, 1, \
+                0, 0, 0, 0, 0, 0, \
+                3, 0, 0, 0, 0) \
+                ON CONFLICT (id) DO UPDATE SET \
+                id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
+                good_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
+                good_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
+                lives = 3, already_fed = 0, \
+                temp1 = 0, temp2 = 0, training_complete = 0', \
+                (message.from_user.id, message.from_user.id))
     conn.commit()
     cur.close()
     conn.close()
@@ -94,15 +113,16 @@ def choice(message, n):
         markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
     bot.send_message(message.chat.id, texts(f"lines_direct/{n}.txt"), reply_markup=markup)
 
+
 def get_smth(column, id):   #достать значение из бд
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
     cur.execute(f'SELECT {column} FROM users WHERE id = ?', (id,))
-    val = cur.fetchall()[0][0]
+    value = cur.fetchone()[0]
     conn.commit()
     cur.close()
     conn.close()
-    return val
+    return value
 
 def push_smth(column, value, id):   #записать значение в бд
     conn = sqlite3.connect('tbdatabase.db')
@@ -112,6 +132,40 @@ def push_smth(column, value, id):   #записать значение в бд
     cur.close()
     conn.close()
 
+def feed(id):   #кормление + сделать взаимодействие с already_fed (внутри или снаружи функции) так, чтобы он прибавлялся и убирал возможность кормить в этот промежуток времени
+    count = get_smth('feedings_till_update', id)
+    count -= 1
+    if count == 0:
+        count = update_stage(id)
+    push_smth('feedings_till_update', count, id)
+
+def update_stage(id):   #апдейт стадии
+    stage = get_smth('stage', id)
+    if stage == 0:
+        count = 3
+    if stage == 1 or 2:
+        count = 4
+    if stage == 3:
+        count = 0
+    stage += 1
+    push_smth('stage', stage, id)
+    return count
+
+def fed_check():    #проверка накормленности и предупреждение + сделать запуск в определенное время + сделать смерть существа и тексты предупреждений
+    fed = get_smth('already_fed', id)
+    if fed == 1:
+        push_smth('already_fed', 0, id)
+    if fed == 0:
+            lives = get_smth('lives', id)
+            lives -= 1
+            if lives == 2:
+                print('2 till wasted')
+            if lives == 1:
+                print('1 till wasted')
+            if lives == 0:
+                print('wasted')
+            push_smth('lives', lives, id)
+            
 
 @bot.callback_query_handler(func=lambda callback: True)
 def buttons_callback(callback):
