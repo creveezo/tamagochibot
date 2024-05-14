@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 import sqlite3
 import time
+from datetime import datetime
 
 bot = telebot.TeleBot('6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk')
 
@@ -54,24 +55,22 @@ def newgame_message(message):
                 (id varchar(16) PRIMARY KEY, stage int, feedings_till_update int, action_number int, \
                 good_count_loc int, evil_count_loc int, cringe_count_loc int, \
                 good_count_abs int, evil_count_abs int, cringe_count_abs int, \
-                lives int, already_fed int, \
-                temp1 varchar(50), temp2 varchar(50), training_complete int)')
+                fed_timestamp varchar(30), temp1 varchar(50), temp2 varchar(50), training_complete int)')
     cur.execute('INSERT INTO users \
                 (id, stage, feedings_till_update, action_number, \
                 good_count_loc, evil_count_loc, cringe_count_loc, \
                 good_count_abs, evil_count_abs, cringe_count_abs, \
-                lives, already_fed, \
-                temp1, temp2, training_complete) \
+                fed_timestamp, temp1, temp2, training_complete) \
                 VALUES (?, 0, 2, 1, \
-                0, 0, 0, 0, 0, 0, \
-                3, 0, 0, 0, 0) \
+                0, 0, 0, \
+                0, 0, 0, \
+                ?, 0, 0, 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
                 good_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
                 good_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
-                lives = 3, already_fed = 0, \
-                temp1 = 0, temp2 = 0, training_complete = 0', \
-                (message.from_user.id, message.from_user.id))
+                fed_timestamp = ?, temp1 = 0, temp2 = 0, training_complete = 0', \
+                (message.from_user.id, datetime.now(), message.from_user.id, datetime.now()))
     conn.commit()
     cur.close()
     conn.close()
@@ -133,16 +132,17 @@ def push_smth(column, value, id):   #записать значение в бд
     conn.close()
 
 def feed(id):   #кормление
-    fed = get_smth('already_fed', id)
-    if fed == 1:
+    fed = get_smth('fed_timestamp', id)
+    check = fed_check(fed)
+    if check == 'YES':
         print('покормили уже')
-    if fed == 0:
+    if check == 'NO':
         count = get_smth('feedings_till_update', id)
         count -= 1
         if count == 0:
             count = update_stage(id)
         push_smth('feedings_till_update', count, id)
-        push_smth('already_fed', 1, id)
+        push_smth('fed_timestamp', datetime.now(), id)
         print('спасибо что покормили')
 
 def update_stage(id):   #апдейт стадии
@@ -157,21 +157,16 @@ def update_stage(id):   #апдейт стадии
     push_smth('stage', stage, id)
     return count
 
-def fed_check():    #проверка накормленности и предупреждение + сделать запуск в определенное время + сделать смерть существа и тексты предупреждений
-    fed = get_smth('already_fed', id)
-    if fed == 1:
-        push_smth('already_fed', 0, id)
-    if fed == 0:
-        lives = get_smth('lives', id)
-        lives -= 1
-        if lives == 2:
-            print('2 till wasted')
-        if lives == 1:
-            print('1 till wasted')
-        if lives == 0:
-            print('wasted')
-        push_smth('lives', lives, id)
-            
+def fed_check(fed):    #проверка накормленности
+    curr = datetime.now()
+    diff = curr - fed
+    if diff.seconds >= 43200:
+        check = 'NO'
+    else:
+        check = 'YES'
+    return check
+    
+
 
 @bot.callback_query_handler(func=lambda callback: True)
 def buttons_callback(callback):
