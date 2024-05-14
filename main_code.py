@@ -55,21 +55,25 @@ def newgame_message(message):
                 (id varchar(16) PRIMARY KEY, stage int, feedings_till_update int, action_number int, \
                 good_count_loc int, evil_count_loc int, cringe_count_loc int, \
                 good_count_abs int, evil_count_abs int, cringe_count_abs int, \
-                fed_timestamp varchar(30), temp1 varchar(50), temp2 varchar(50), training_complete int)')
+                lives int, fed_timestamp varchar(30), \
+                temp1 varchar(50), temp2 varchar(50), training_complete int)')
     cur.execute('INSERT INTO users \
                 (id, stage, feedings_till_update, action_number, \
                 good_count_loc, evil_count_loc, cringe_count_loc, \
                 good_count_abs, evil_count_abs, cringe_count_abs, \
-                fed_timestamp, temp1, temp2, training_complete) \
+                lives, fed_timestamp, \
+                temp1, temp2, training_complete) \
                 VALUES (?, 0, 2, 1, \
                 0, 0, 0, \
                 0, 0, 0, \
-                ?, 0, 0, 0) \
+                3, ?, \
+                0, 0, 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
                 good_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
                 good_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
-                fed_timestamp = ?, temp1 = 0, temp2 = 0, training_complete = 0', \
+                lives = 3, fed_timestamp = ?, \
+                temp1 = 0, temp2 = 0, training_complete = 0', \
                 (message.from_user.id, datetime.now(), message.from_user.id, datetime.now()))
     conn.commit()
     cur.close()
@@ -157,13 +161,26 @@ def update_stage(id):   #апдейт стадии
     push_smth('stage', stage, id)
     return count
 
-def fed_check(fed):    #проверка накормленности
+def fed_check(fed):    #проверка накормленности и пропусков
     curr = datetime.now()
     diff = curr - fed
-    if diff.seconds >= 43200:
-        check = 'NO'
-    else:
+    if diff.seconds <= 43200:
         check = 'YES'
+    if diff.seconds > 43200:
+        check = 'NO'
+    if diff.seconds > 86400:
+        lives = get_smth('lives', id)
+        lives -= 1
+        if lives == 2:
+            print('2 till death')
+            push_smth('lives', lives, id)
+        if lives == 1:
+            print('1 till death')
+            push_smth('lives', lives, id)
+        if lives == 0:
+            print('death')
+            #стереть строчку из таблицы
+        
     return check
     
 
