@@ -132,12 +132,18 @@ def push_smth(column, value, id):   #записать значение в бд
     cur.close()
     conn.close()
 
-def feed(id):   #кормление + сделать взаимодействие с already_fed (внутри или снаружи функции) так, чтобы он прибавлялся и убирал возможность кормить в этот промежуток времени
-    count = get_smth('feedings_till_update', id)
-    count -= 1
-    if count == 0:
-        count = update_stage(id)
-    push_smth('feedings_till_update', count, id)
+def feed(id):   #кормление
+    fed = get_smth('already_fed', id)
+    if fed == 1:
+        print('покормили уже')
+    if fed == 0:
+        count = get_smth('feedings_till_update', id)
+        count -= 1
+        if count == 0:
+            count = update_stage(id)
+        push_smth('feedings_till_update', count, id)
+        push_smth('already_fed', 1, id)
+        print('спасибо что покормили')
 
 def update_stage(id):   #апдейт стадии
     stage = get_smth('stage', id)
@@ -156,15 +162,15 @@ def fed_check():    #проверка накормленности и преду
     if fed == 1:
         push_smth('already_fed', 0, id)
     if fed == 0:
-            lives = get_smth('lives', id)
-            lives -= 1
-            if lives == 2:
-                print('2 till wasted')
-            if lives == 1:
-                print('1 till wasted')
-            if lives == 0:
-                print('wasted')
-            push_smth('lives', lives, id)
+        lives = get_smth('lives', id)
+        lives -= 1
+        if lives == 2:
+            print('2 till wasted')
+        if lives == 1:
+            print('1 till wasted')
+        if lives == 0:
+            print('wasted')
+        push_smth('lives', lives, id)
             
 
 @bot.callback_query_handler(func=lambda callback: True)

@@ -14,7 +14,7 @@ bot = telebot.TeleBot(token)
 @bot.message_handler(commands=['start'])    #ответ на команду /start - соо от бота
 def start_message(message):
 
-    conn = sqlite3.connect('tbdatabase.db')    #создание бд/подключение к бд, записывание пользователя, если его ещё нет
+    conn = sqlite3.connect('tbdatabase1.db')    #создание бд/подключение к бд, записывание пользователя, если его ещё нет
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS users (id varchar(16) PRIMARY KEY, handler varchar(15))')
     cur.execute(f'INSERT INTO users (id, handler) VALUES ({message.from_user.id}, CURRENT_TIME) ON CONFLICT (id) DO UPDATE SET id = {message.from_user.id}, handler = CURRENT_TIME')
