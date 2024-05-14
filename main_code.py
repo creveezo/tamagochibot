@@ -177,6 +177,7 @@ def update_stage(id):   # апдейт стадии
         count = 0
     stage += 1
     push_smth('stage', stage, id)
+    push_smth('action_number', 1, id)
     return count
 
 
