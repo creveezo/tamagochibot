@@ -2,11 +2,12 @@ import telebot
 from telebot import types
 import sqlite3
 import time
+import random
 from datetime import datetime
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(catgirl)
+bot = telebot.TeleBot(normal)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
@@ -47,6 +48,32 @@ def format_replace(line, d):
     for key, value in d.items():
         line = line.replace("{" + key + "}", value)
     return line
+
+
+def randomiser(file):
+    with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
+        list = file.read().split("\n")
+        return random.choice(list)
+
+
+def amusement_choice(type):
+    kind = randomiser(f'{type}_kind')
+    cringe = randomiser(f'{type}_cringe')
+    evil = randomiser(f'{type}_evil')
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(kind, callback_data="kind_1"))
+    markup.add(types.InlineKeyboardButton(cringe, callback_data="cringe_1"))
+    markup.add(types.InlineKeyboardButton(evil, callback_data="evil_1"))
+
+    #bot.send_message(chat.id, 'Что у нас на сегодня?', reply_markup=markup)
+
+
+
+
+
+
+
+
 
 
 @bot.message_handler(commands=['start'])  # ответ на команду /start - соо от бота
@@ -107,7 +134,7 @@ def newgame_message(message):
 
 def make_action(message, n: int, NeedPhoto: bool):    # считывает линейные действия
     if n == 10:
-        bot.send_message(message.chat.id, texts("lines_direct/10_1"))
+        bot.send_message(message.chat.id, texts("lines_direct/10_1"), parse_mode="HTML")
     # надо не забыть присылать фоту если мы делаем ретерн чойс как у действия 6
     if n in [6, 10]:
         return choice(message, n)
@@ -115,11 +142,20 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
         bot.send_message(message.chat.id, "<i>кто прочитал тот сдох...(с вас 5 рублей)</i>", parse_mode="HTML")
     else:
         if n == 4:
-            bot.send_message(message.chat.id, "Ну конечно. На обратной стороне было неприлично много писанины:")
+            bot.send_message(message.chat.id, "Ну, конечно. На обратной стороне было неприлично много писанины:")
             #time.sleep(2)
         if NeedPhoto:
-            photo = open(f'scenario/photos/{n}.png', 'rb')
-            bot.send_photo(message.chat.id, photo)
+            try:
+                photo = open(f'scenario/photos/{n}.png', 'rb')
+                bot.send_photo(message.chat.id, photo)
+            except:
+                gif = open(f'scenario/photos/{n}.gif', 'rb')
+                bot.send_document(message.chat.id, gif)
+
+
+            if n == 4:
+                bot.send_message(message.chat.id, texts("lines_direct/4_1"))
+
             #time.sleep(5)
 
         markup = types.InlineKeyboardMarkup()
@@ -167,10 +203,11 @@ def feed(id):   # кормление
         fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
         push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
+        push_smth('fed_timestamp', datetime.now(), id)
         print('спасибо что покормили')
     if fcheck == 'YES':
         print('покормили уже')
-        
+
 
 
 def update_stage(id):   # апдейт стадии
@@ -229,8 +266,8 @@ def buttons_callback(callback):
 
         if n in [2, 3, 4, 5, 6, 8]:
             make_action(callback.message, n, True)
-            if n == 6:
-                feed(callback.message.chat.id)
+        if n == 6:
+            feed(callback.message.chat.id)
         else:
             make_action(callback.message, n, False)
 
