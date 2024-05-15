@@ -7,7 +7,7 @@ from datetime import datetime
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(normal)
+bot = telebot.TeleBot(catgirl)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
@@ -203,11 +203,18 @@ def feed(id):   # кормление
         fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
         push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
-        push_smth('fed_timestamp', datetime.now(), id)
         print('спасибо что покормили')
     if fcheck == 'YES':
         print('покормили уже')
-
+    if fcheck == 'DEATH':
+        conn = sqlite3.connect('tbdatabase.db')
+        cur = conn.cursor()
+        cur.execute('DELETE FROM users WHERE id = ?', (id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        #сделать чтобы потом на кнопочки нельзя было тыкать
+        
 
 
 def update_stage(id):   # апдейт стадии
@@ -226,10 +233,11 @@ def update_stage(id):   # апдейт стадии
         scale_abs = get_smth(f'{scale}_count_abs', id)
         scale_abs += scale_loc
         push_smth(f'{scale}_count_abs', scale_abs, id)
+        push_smth(f'{scale}_count_loc', 0, id)
     return count
 
 
-def fed_check(fed, id):    #проверка накормленности и пропусков
+def fed_check(fed, id):    # проверка накормленности и пропусков
     curr = datetime.now()
     fed = datetime.strptime(fed[:19], '%Y-%m-%d %H:%M:%S')
     diff = curr - fed
@@ -243,13 +251,12 @@ def fed_check(fed, id):    #проверка накормленности и п�
         lives -= 1
         if lives == 2:
             print('2 till death')
-            push_smth('lives', lives, id)
         elif lives == 1:
             print('1 till death')
-            push_smth('lives', lives, id)
         elif lives == 0:
             print('death')
-            #стереть строчку из таблицы
+            fcheck = 'DEATH'
+        push_smth('lives', lives, id)
     return fcheck
 
 
