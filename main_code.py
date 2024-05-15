@@ -6,7 +6,7 @@ from datetime import datetime
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(normal)
+bot = telebot.TeleBot(catgirl)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
@@ -83,15 +83,15 @@ def newgame_message(message):
                 VALUES (?, 0, 2, 1, \
                 0, 0, 0, \
                 0, 0, 0, \
-                3, ?, \
+                3, 0, \
                 0, 0, 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
                 kind_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
                 kind_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
-                lives = 3, fed_timestamp = ?, \
+                lives = 3, fed_timestamp = 0, \
                 temp1 = 0, temp2 = 0, training_complete = 0', \
-                (message.from_user.id, datetime.now(), message.from_user.id, datetime.now()))
+                (message.from_user.id, message.from_user.id))
     conn.commit()
     cur.close()
     conn.close()
@@ -154,54 +154,61 @@ def push_smth(column, value, id):   #записать значение в бд
 
 def feed(id):   # кормление
     fed = get_smth('fed_timestamp', id)
-    check = fed_check(fed)
-    if check == 'YES':
-        print('покормили уже')
-    if check == 'NO':
+    trcheck = get_smth('training_complete', id)
+    if trcheck == 0:
+        fcheck = 'NO'
+    if trcheck == 1:
+        fcheck = fed_check(fed, id)
+    if fcheck == 'NO':
         count = get_smth('feedings_till_update', id)
         count -= 1
         if count == 0:
             count = update_stage(id)
+        fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+        push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
-        push_smth('fed_timestamp', datetime.now(), id)
         print('спасибо что покормили')
+    if fcheck == 'YES':
+        print('покормили уже')
+        
 
 
 def update_stage(id):   # апдейт стадии
     stage = get_smth('stage', id)
-    if stage == 0:
-        count = 3
-    if stage == 1 or 2:
-        count = 4
-    if stage == 3:
-        count = 0
     stage += 1
+    if stage == 1:
+        count = 3
+    elif stage == 4:
+        count = 0
+    elif stage == 2 or stage == 3:
+        count = 4
     push_smth('stage', stage, id)
     push_smth('action_number', 1, id)
     return count
 
 
-def fed_check(fed):    #проверка накормленности и пропусков
+def fed_check(fed, id):    #проверка накормленности и пропусков
     curr = datetime.now()
+    fed = datetime.strptime(fed[:19], '%Y-%m-%d %H:%M:%S')
     diff = curr - fed
-    if diff.seconds <= 43200:
-        check = 'YES'
-    if diff.seconds > 43200:
-        check = 'NO'
-    if diff.seconds > 86400:
+    diffsec = diff.seconds + diff.days * 60*60*24
+    if diffsec <= 43200:
+        fcheck = 'YES'
+    if diffsec > 43200:
+        fcheck = 'NO'
+    if diffsec > 86400:
         lives = get_smth('lives', id)
         lives -= 1
         if lives == 2:
             print('2 till death')
             push_smth('lives', lives, id)
-        if lives == 1:
+        elif lives == 1:
             print('1 till death')
             push_smth('lives', lives, id)
-        if lives == 0:
+        elif lives == 0:
             print('death')
             #стереть строчку из таблицы
-
-    return check
+    return fcheck
 
 
 
@@ -217,6 +224,8 @@ def buttons_callback(callback):
 
         if n in [2, 3, 4, 5, 6, 8]:
             make_action(callback.message, n, True)
+            if n == 6:
+                feed(callback.message.chat.id)
         else:
             make_action(callback.message, n, False)
 
