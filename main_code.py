@@ -184,6 +184,11 @@ def update_stage(id):   # апдейт стадии
         count = 4
     push_smth('stage', stage, id)
     push_smth('action_number', 1, id)
+    for scale in ['kind', 'cringe', 'evil']:
+        scale_loc = get_smth(f'{scale}_count_loc', id)
+        scale_abs = get_smth(f'{scale}_count_abs', id)
+        scale_abs += scale_loc
+        push_smth(f'{scale}_count_abs', scale_abs, id)
     return count
 
 
@@ -268,7 +273,10 @@ def buttons_callback(callback):
                 else:
                     lenth = "полтора часа"
                 bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {lenth}...")
-            #scale += callback.data[-1]
+            else:
+                scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
+                scale_count += callback.data[-1]
+                push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
 
 
 bot.infinity_polling()
