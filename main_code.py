@@ -4,6 +4,7 @@ import sqlite3
 import time
 import random
 from datetime import datetime
+from telebot.types import InputFile
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
@@ -38,7 +39,6 @@ def invert(file):
             return d
 
 
-
 def joiner(text1, text2, NeedTexts=True) -> str:       # функция для редактирования сообщений (два фрагмента текста совмещает в один)
     if NeedTexts == False:
         return f'{text1}\n\n{text2}'
@@ -50,30 +50,22 @@ def format_replace(line, d):
     return line
 
 
-def randomiser(file):
+def randomizer(file):
     with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
         list = file.read().split("\n")
         return random.choice(list)
 
 
-def amusement_choice(type):
-    kind = randomiser(f'{type}_kind')
-    cringe = randomiser(f'{type}_cringe')
-    evil = randomiser(f'{type}_evil')
+def amusement_choice(type, message):
+    kind = randomizer(f'amusement/{type}_kind')
+    cringe = randomizer(f'amusement/{type}_cringe')
+    evil = randomizer(f'amusement/{type}_evil')
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(kind, callback_data="kind_1"))
-    markup.add(types.InlineKeyboardButton(cringe, callback_data="cringe_1"))
-    markup.add(types.InlineKeyboardButton(evil, callback_data="evil_1"))
+    markup.add(types.InlineKeyboardButton(kind, callback_data=f"{kind}_edit_kind_1"))
+    markup.add(types.InlineKeyboardButton(cringe, callback_data=f"{cringe}_edit_cringe_1"))
+    markup.add(types.InlineKeyboardButton(evil, callback_data=f"{evil}_edit_evil_1"))
 
-    #bot.send_message(chat.id, 'Что у нас на сегодня?', reply_markup=markup)
-
-
-
-
-
-
-
-
+    bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
 
 
 @bot.message_handler(commands=['start'])  # ответ на команду /start - соо от бота
@@ -135,10 +127,13 @@ def newgame_message(message):
 def make_action(message, n: int, NeedPhoto: bool):    # считывает линейные действия
     if n == 10:
         bot.send_message(message.chat.id, texts("lines_direct/10_1"), parse_mode="HTML")
+    if n == 11:
+        push_smth("training_complete", 1, message.chat.id)
+        print('обучаловка пройдена')
     # надо не забыть присылать фоту если мы делаем ретерн чойс как у действия 6
     if n in [6, 10]:
         return choice(message, n)
-    if n > 10:
+    if n > 11:
         bot.send_message(message.chat.id, "<i>кто прочитал тот сдох...(с вас 5 рублей)</i>", parse_mode="HTML")
     else:
         if n == 4:
@@ -149,9 +144,7 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
                 photo = open(f'scenario/photos/{n}.png', 'rb')
                 bot.send_photo(message.chat.id, photo)
             except:
-                gif = open(f'scenario/photos/{n}.gif', 'rb')
-                bot.send_document(message.chat.id, gif)
-
+                bot.send_animation(message.chat.id, InputFile(f'scenario/photos/{n}.mp4'))
 
             if n == 4:
                 bot.send_message(message.chat.id, texts("lines_direct/4_1"))
@@ -160,7 +153,7 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
-        bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup)
+        bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")
 
 
 def choice(message, n):
@@ -180,6 +173,7 @@ def get_smth(column, id):   # достать значение из бд
     conn.close()
     return value
 
+
 def push_smth(column, value, id):   #записать значение в бд
     conn = sqlite3.connect('tbdatabase.db')
     cur = conn.cursor()
@@ -187,6 +181,7 @@ def push_smth(column, value, id):   #записать значение в бд
     conn.commit()
     cur.close()
     conn.close()
+
 
 def feed(id):   # кормление
     fed = get_smth('fed_timestamp', id)
@@ -266,15 +261,18 @@ def buttons_callback(callback):
 
     if callback.data == "next":
         n = get_smth('action_number', callback.message.chat.id)
+        if n == 11:
+            bot.edit_message_text(callback.message.chat.id, callback.message.message_id,
+                                  texts('lines_direct/11'), parse_mode="HTML")
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'))
         n += 1
         push_smth('action_number', n, callback.message.chat.id)
 
-        if n in [2, 3, 4, 5, 6, 8]:
-            make_action(callback.message, n, True)
         if n == 6:
             feed(callback.message.chat.id)
+        if n in [2, 3, 4, 5, 6, 8]:
+            make_action(callback.message, n, True)
         else:
             make_action(callback.message, n, False)
 
@@ -303,24 +301,31 @@ def buttons_callback(callback):
                                       text=joiner(texts('lines_direct/10'), invert(f'lines_buttons/c{n}')[callback.data], False))
                 response = get_smth('temp1', callback.message.chat.id)
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
-
-
+                amuse = get_smth('temp2', callback.message.chat.id)
+                amusement_choice(amuse, callback.message)
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
-                make_action(callback.message, n, False)
-                bot.send_message(callback.message.chat.id, "тут будет выбор из трех но пока его нет но он будет")
-                amuse = get_smth('temp2', callback.message.chat.id)
-                if amuse == "film":
-                    lenth = "3 часа"
-                elif amuse == "youtube":
-                    lenth = "2 часа"
-                else:
-                    lenth = "полтора часа"
-                bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {lenth}...")
             else:
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
-                scale_count += callback.data[-1]
+                scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
+                if callback.data[-1] == "1":
+                    print(callback.data)
+                    bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                          text=joiner('Что у нас на сегодня?',
+                                                      callback.data[:callback.data.find("_")], False))
+
+                    n = get_smth("action_number", callback.message.chat.id)
+                    if n == 11:
+                        amuse = get_smth('temp2', callback.message.chat.id)
+                        if amuse == "film":
+                            length = "3 часа"
+                        elif amuse == "youtube":
+                            length = "2 часа"
+                        else:
+                            length = "полтора часа"
+                        bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {length}...")
+                        make_action(callback.message, n, False)
 
 
 bot.infinity_polling()
