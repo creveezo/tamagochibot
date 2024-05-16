@@ -285,8 +285,25 @@ def fed_check(fed, id):    # проверка накормленности и п
         push_smth('lives', lives, id)
     return fcheck
 
-def amuse_time_check(time, id): #
-    print('привет оля это временно')
+def amuse_time_check(time, id):    #time пишите в часах пожалуйста. проверка, прошло ли time часов с момента в temp_timestamp
+    time = time * 60*60
+    curr = datetime.now()
+    amused = get_smth('temp_timestamp', id)
+    amused = datetime.strptime(amused[:19], '%Y-%m-%d %H:%M:%S')
+    diff = curr - amused
+    diffsec = diff.seconds + diff.days * 60*60*24
+    if diffsec > time:
+        ans = 1
+    else:
+        ans = 0
+    return ans
+
+def amuse_time_push(id):    #запись времени начала развлечения в бд
+    time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+    push_smth('temp_timestamp', time, id)
+
+
+
 
 
 @bot.callback_query_handler(func=lambda callback: True)
