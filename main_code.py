@@ -57,17 +57,27 @@ def randomizer(file):
 
 
 def amusement_choice(type, message):
-    kind = randomizer(f'amusement/{type}_kind')
-    cringe = randomizer(f'amusement/{type}_cringe')
-    evil = randomizer(f'amusement/{type}_evil')
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(kind, callback_data=f"{kind}_edit_kind_1"))
-    markup.add(types.InlineKeyboardButton(cringe, callback_data=f"{cringe}_edit_cringe_1"))
-    markup.add(types.InlineKeyboardButton(evil, callback_data=f"{evil}_edit_evil_1"))
-    print(kind, cringe, evil)
-    print('l')
+    last_amusement = get_smth("last_amuse_type", message.chat.id)
+    if last_amusement == "film":
+        time = 3
+    elif last_amusement == "youtube":
+        time = 2
+    else:
+        time = 1.5
+    if time_check("amuse", time, message.chat.id) == 0:
+        bot.send_message(message.chat.id, "Прошло недостаточно времени, пожалуйста, попробуйте позже.")
+    else:
+        kind = randomizer(f'amusement/{type}_kind')
+        cringe = randomizer(f'amusement/{type}_cringe')
+        evil = randomizer(f'amusement/{type}_evil')
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(kind, callback_data="kind_1"))
+        markup.add(types.InlineKeyboardButton(cringe, callback_data="cringe_1"))
+        markup.add(types.InlineKeyboardButton(evil, callback_data="evil_1"))
+        print(kind, cringe, evil)
+        push_smth("temp_name",f'{kind}/{cringe}/{evil}', message.chat.id)
 
-    bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
 
 
 def fun_choice(message):
@@ -123,7 +133,7 @@ def newgame_message(message):
                 kind_count_loc int, evil_count_loc int, cringe_count_loc int, \
                 kind_count_abs int, evil_count_abs int, cringe_count_abs int, \
                 lives int, fed_timestamp varchar(30), \
-                temp1 varchar(50), temp2 varchar(50), temp_name varchar(50), \
+                temp1 varchar(50), temp2 varchar(50), temp_name varchar(200), \
                 last_amuse_type varchar(10), amuse_timestamp varchar(30), stage_timestamp varchar(30), \
                 training_complete int)')
     cur.execute('INSERT INTO users \
@@ -328,7 +338,7 @@ def buttons_callback(callback):
         n = get_smth('action_number', callback.message.chat.id)
 
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'))
+                              text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'), parse_mode="HTML")
         n += 1
         push_smth('action_number', n, callback.message.chat.id)
 
@@ -351,6 +361,7 @@ def buttons_callback(callback):
     amusement = ["film", "book", "music", "youtube", "series", "cartoon", "game"]
     for amuse in amusement:
         if callback.data.find(amuse) != -1:
+            push_smth("last_amuse_type", amuse, callback.message.chat.id)
             if callback.data == f"{amuse}_starting":
                 response = texts(f'amusement/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
@@ -359,11 +370,9 @@ def buttons_callback(callback):
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
                 push_smth('temp1', response, callback.message.chat.id)
-                push_smth('temp2', amuse, callback.message.chat.id)
                 make_action(callback.message, n, False)
             else:
-                push_smth('temp2', amuse, callback.message.chat.id)
-                amusement_choice(amuse, callback.message.chat.id)
+                amusement_choice(amuse, callback.message)
 
 
     scale_types = ["kind", "cringe", "evil"]
@@ -379,32 +388,38 @@ def buttons_callback(callback):
                                       text=joiner(texts('lines_direct/10'), invert(f'lines_buttons/c{n}')[callback.data], False))
                 response = get_smth('temp1', callback.message.chat.id)
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
-                amuse = get_smth('temp2', callback.message.chat.id)
+                amuse = get_smth('last_amuse_type', callback.message.chat.id)
                 amusement_choice(amuse, callback.message)
-                print(n)
+                print(f'print n: {n}')
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
             else:
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
                 scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
-                print(scale_count)
+                print(callback.data)
                 if callback.data[-1] == "1":
-                    print(callback.data)
-                    bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                                          text=joiner('Что у нас на сегодня?',
-                                                      callback.data[:callback.data.find("_")], False))
+                    amuse_time_push(callback.message.chat.id)
+                    names = list(get_smth("temp_name", callback.message.chat.id).split("/"))
+                    if scale == "kind":
+                        curr_name = names[0]
+                    elif scale == "cringe":
+                        curr_name = names[1]
+                    else:
+                        curr_name = names[2]
 
+                    bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                          text=joiner('Что у нас на сегодня?', curr_name, False))
                     n = get_smth("action_number", callback.message.chat.id)
+                    amuse = get_smth('last_amuse_type', callback.message.chat.id)
+                    if amuse == "film":
+                        length = "3 часа"
+                    elif amuse == "youtube":
+                        length = "2 часа"
+                    else:
+                        length = "полтора часа"
+                    bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {length}...")
                     if n == 11:
-                        amuse = get_smth('temp2', callback.message.chat.id)
-                        if amuse == "film":
-                            length = "3 часа"
-                        elif amuse == "youtube":
-                            length = "2 часа"
-                        else:
-                            length = "полтора часа"
-                        bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {length}...")
                         make_action(callback.message, n, False)
 
 
