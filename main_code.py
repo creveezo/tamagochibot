@@ -250,7 +250,7 @@ def feed(id):   # кормление
         
 
 
-def update_stage(id):   # апдейт стадии - СДЕЛАТЬ ТАК ЧТОБЫ ПОСЛЕ АПДЕЙТА БЫЛО 12 ЧАСОВ ДО СЛЕД ДЕЙСТВИЯ (применить amuse_time_check())
+def update_stage(id):   # апдейт стадии - перед началом сделующего этапа проверять с помощью time_check(), что прошло 12 часов с stage_timestamp
     stage = get_smth('stage', id)
     stage += 1
     if stage == 1:
@@ -294,12 +294,12 @@ def fed_check(fed, id):    # проверка накормленности и п
         push_smth('lives', lives, id)
     return fcheck
 
-def amuse_time_check(time, id):    #time пишите в часах пожалуйста. проверка, прошло ли time часов с момента в amuse_timestamp
-    time = time * 60*60
+def time_check(category, time, id):    # проверка, прошло ли time часов с момента в amuse_timestamp и stage_timestamp
+    time = time * 60*60                # time пишите в часах пожалуйста. category - либо amuse, либо stage
     curr = datetime.now()
-    amused = get_smth('amuse_timestamp', id)
-    amused = datetime.strptime(amused[:19], '%Y-%m-%d %H:%M:%S')
-    diff = curr - amused
+    did = get_smth(f'{category}_timestamp', id)
+    did = datetime.strptime(did[:19], '%Y-%m-%d %H:%M:%S')
+    diff = curr - did
     diffsec = diff.seconds + diff.days * 60*60*24
     if diffsec > time:
         ans = 1
