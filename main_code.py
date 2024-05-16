@@ -65,8 +65,9 @@ def amusement_choice(type, message):
     markup.add(types.InlineKeyboardButton(cringe, callback_data=f"{cringe}_edit_cringe_1"))
     markup.add(types.InlineKeyboardButton(evil, callback_data=f"{evil}_edit_evil_1"))
     print(kind, cringe, evil)
+    print('l')
 
-    bot.send_message(message, 'Что у нас на сегодня?', reply_markup=markup)
+    bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
 
 
 def fun_choice(message):
@@ -242,11 +243,10 @@ def feed(id):   # кормление
         conn.commit()
         cur.close()
         conn.close()
-        #сделать чтобы потом на кнопочки нельзя было тыкать
         
 
 
-def update_stage(id):   # апдейт стадии
+def update_stage(id):   # апдейт стадии - СДЕЛАТЬ ТАК ЧТОБЫ ПОСЛЕ АПДЕЙТА БЫЛО 12 ЧАСОВ ДО СЛЕД ДЕЙСТВИЯ (применить amuse_time_check())
     stage = get_smth('stage', id)
     stage += 1
     if stage == 1:
@@ -256,6 +256,7 @@ def update_stage(id):   # апдейт стадии
     elif stage == 2 or stage == 3:
         count = 4
     push_smth('stage', stage, id)
+    #сделать отдельный темп времени и пушнуть в него
     push_smth('action_number', 1, id)
     for scale in ['kind', 'cringe', 'evil']:
         scale_loc = get_smth(f'{scale}_count_loc', id)
@@ -364,6 +365,9 @@ def buttons_callback(callback):
     for scale in scale_types:
         if callback.data.find(scale) != -1:
             if callback.data == f"{scale}_starting":
+                scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
+                scale_count += 3
+                push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
                 n = get_smth('action_number', callback.message.chat.id)
                 res = texts(f'temp/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
@@ -372,12 +376,14 @@ def buttons_callback(callback):
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
                 amuse = get_smth('temp2', callback.message.chat.id)
                 amusement_choice(amuse, callback.message)
+                print(n)
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
             else:
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
                 scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
+                print(scale_count)
                 if callback.data[-1] == "1":
                     print(callback.data)
                     bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
