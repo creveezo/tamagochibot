@@ -64,14 +64,41 @@ def amusement_choice(type, message):
     markup.add(types.InlineKeyboardButton(kind, callback_data=f"{kind}_edit_kind_1"))
     markup.add(types.InlineKeyboardButton(cringe, callback_data=f"{cringe}_edit_cringe_1"))
     markup.add(types.InlineKeyboardButton(evil, callback_data=f"{evil}_edit_evil_1"))
+    print(kind, cringe, evil)
 
-    bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
+    bot.send_message(message, 'Что у нас на сегодня?', reply_markup=markup)
+
+
+def fun_choice(message):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("Смотреть фильм", callback_data="film"))
+    markup.add(types.InlineKeyboardButton("Читать книги", callback_data="book"))
+    markup.add(types.InlineKeyboardButton("Слушать музыку", callback_data="music"))
+    markup.add(types.InlineKeyboardButton("Смотреть ютубчик", callback_data="youtube"))
+    markup.add(types.InlineKeyboardButton("Смотреть сериальчик", callback_data="series"))
+    markup.add(types.InlineKeyboardButton("Смотреть мультики", callback_data="cartoon"))
+    markup.add(types.InlineKeyboardButton("Играть в игры", callback_data="game"))
+
+    bot.send_message(message, 'Чем сегодня займёмся?', reply_markup=markup)
 
 
 @bot.message_handler(commands=['start'])  # ответ на команду /start - соо от бота
 def start_message(message):
     d = {"user": user(message)}
     bot.send_message(message.chat.id, format_replace(texts("commands/hello"), d), parse_mode="HTML")
+
+
+@bot.message_handler(commands=['menu'])
+def menu_message(message):
+    check = get_smth("training_complete", message.chat.id)
+    if check == 0:
+        bot.send_message(message.chat.id, "<i>Данная команда ещё не доступна</i>", parse_mode="HTML")
+    else:
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("Покормить", callback_data="feed"))
+        markup.add(types.InlineKeyboardButton("Развлечь", callback_data="funny"))
+
+        bot.send_message(message.chat.id, 'Доступные действия:', reply_markup=markup)
 
 
 @bot.message_handler(commands=['contact'])     #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
@@ -133,7 +160,7 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
     # надо не забыть присылать фоту если мы делаем ретерн чойс как у действия 6
     if n in [6, 10]:
         return choice(message, n)
-    if n > 11:
+    if n > 12:
         bot.send_message(message.chat.id, "<i>кто прочитал тот сдох...(с вас 5 рублей)</i>", parse_mode="HTML")
     else:
         if n == 4:
@@ -150,9 +177,9 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
                 bot.send_message(message.chat.id, texts("lines_direct/4_1"))
 
             #time.sleep(5)
-
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
+        if n != 12:
+            markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
         bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")
 
 
@@ -261,9 +288,7 @@ def buttons_callback(callback):
 
     if callback.data == "next":
         n = get_smth('action_number', callback.message.chat.id)
-        if n == 11:
-            bot.edit_message_text(callback.message.chat.id, callback.message.message_id,
-                                  texts('lines_direct/11'), parse_mode="HTML")
+
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                               text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'))
         n += 1
@@ -276,7 +301,14 @@ def buttons_callback(callback):
         else:
             make_action(callback.message, n, False)
 
-    amusement = ["film", "book", "music"]
+
+    if callback.data == "feed":
+        feed(callback.message.chat.id)
+    if callback.data == "funny":
+        fun_choice(callback.message.chat.id)
+
+
+    amusement = ["film", "book", "music", "youtube", "series", "cartoon", "game"]
     for amuse in amusement:
         if callback.data.find(amuse) != -1:
             if callback.data == f"{amuse}_starting":
@@ -289,6 +321,9 @@ def buttons_callback(callback):
                 push_smth('temp1', response, callback.message.chat.id)
                 push_smth('temp2', amuse, callback.message.chat.id)
                 make_action(callback.message, n, False)
+            else:
+                push_smth('temp2', amuse, callback.message.chat.id)
+                amusement_choice(amuse, callback.message.chat.id)
 
 
     scale_types = ["kind", "cringe", "evil"]
