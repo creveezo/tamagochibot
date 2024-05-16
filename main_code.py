@@ -8,7 +8,7 @@ from telebot.types import InputFile
 
 catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
 normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(catgirl)
+bot = telebot.TeleBot(normal)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
@@ -225,9 +225,9 @@ def feed(id):   # кормление
         fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
         push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
-        print('спасибо что покормили')
+        bot.send_message(id, texts("action_responses/fed"))
     if fcheck == 'YES':
-        print('покормили уже')
+        bot.send_message(id, texts("action_responses/cant_feed"))
     if fcheck == 'DEATH':
         conn = sqlite3.connect('tbdatabase.db')
         cur = conn.cursor()
@@ -272,11 +272,11 @@ def fed_check(fed, id):    # проверка накормленности и п
         lives = get_smth('lives', id)
         lives -= 1
         if lives == 2:
-            print('2 till death')
+            bot.send_message(id, texts("action_responses/2tilld"))
         elif lives == 1:
-            print('1 till death')
+            bot.send_message(id, texts("action_responses/1tilld"))
         elif lives == 0:
-            print('death')
+            bot.send_message(id, texts("action_responses/d"))
             fcheck = 'DEATH'
         push_smth('lives', lives, id)
     return fcheck
