@@ -123,27 +123,27 @@ def newgame_message(message):
                 kind_count_loc int, evil_count_loc int, cringe_count_loc int, \
                 kind_count_abs int, evil_count_abs int, cringe_count_abs int, \
                 lives int, fed_timestamp varchar(30), \
-                temp1 varchar(50), temp2 varchar(50), temp_name varchar(50), temp_timestamp varchar(30), \
+                temp1 varchar(50), temp2 varchar(50), temp_name varchar(50), amuse_timestamp varchar(30), stage_timestamp varchar(30), \
                 training_complete int)')
     cur.execute('INSERT INTO users \
                 (id, stage, feedings_till_update, action_number, \
                 kind_count_loc, evil_count_loc, cringe_count_loc, \
                 kind_count_abs, evil_count_abs, cringe_count_abs, \
                 lives, fed_timestamp, \
-                temp1, temp2, temp_name, temp_timestamp, \
+                temp1, temp2, temp_name, amuse_timestamp, stage_timestamp, \
                 training_complete) \
                 VALUES (?, 0, 2, 1, \
                 0, 0, 0, \
                 0, 0, 0, \
                 3, 0, \
-                0, 0, 0, 0, \
+                0, 0, 0, 0, 0, \
                 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
                 kind_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
                 kind_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
                 lives = 3, fed_timestamp = 0, \
-                temp1 = 0, temp2 = 0, temp_name = 0, temp_timestamp = 0, \
+                temp1 = 0, temp2 = 0, temp_name = 0, amuse_timestamp = 0, stage_timestamp = 0, \
                 training_complete = 0', \
                 (message.from_user.id, message.from_user.id))
     conn.commit()
@@ -256,7 +256,8 @@ def update_stage(id):   # апдейт стадии - СДЕЛАТЬ ТАК ЧТ
     elif stage == 2 or stage == 3:
         count = 4
     push_smth('stage', stage, id)
-    #сделать отдельный темп времени и пушнуть в него
+    time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+    push_smth('stage_timestamp', time, id)
     push_smth('action_number', 1, id)
     for scale in ['kind', 'cringe', 'evil']:
         scale_loc = get_smth(f'{scale}_count_loc', id)
@@ -289,10 +290,10 @@ def fed_check(fed, id):    # проверка накормленности и п
         push_smth('lives', lives, id)
     return fcheck
 
-def amuse_time_check(time, id):    #time пишите в часах пожалуйста. проверка, прошло ли time часов с момента в temp_timestamp
+def amuse_time_check(time, id):    #time пишите в часах пожалуйста. проверка, прошло ли time часов с момента в amuse_timestamp
     time = time * 60*60
     curr = datetime.now()
-    amused = get_smth('temp_timestamp', id)
+    amused = get_smth('amuse_timestamp', id)
     amused = datetime.strptime(amused[:19], '%Y-%m-%d %H:%M:%S')
     diff = curr - amused
     diffsec = diff.seconds + diff.days * 60*60*24
@@ -304,7 +305,7 @@ def amuse_time_check(time, id):    #time пишите в часах пожалу
 
 def amuse_time_push(id):    #запись времени начала развлечения в бд
     time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-    push_smth('temp_timestamp', time, id)
+    push_smth('amuse_timestamp', time, id)
 
 def if_alive(id):
     try:
