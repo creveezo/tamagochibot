@@ -90,15 +90,18 @@ def start_message(message):
 
 @bot.message_handler(commands=['menu'])
 def menu_message(message):
-    check = get_smth("training_complete", message.chat.id)
-    if check == 0:
-        bot.send_message(message.chat.id, "<i>Данная команда ещё не доступна</i>", parse_mode="HTML")
-    else:
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("Покормить", callback_data="feed"))
-        markup.add(types.InlineKeyboardButton("Развлечь", callback_data="funny"))
+    try:
+        check = get_smth("training_complete", message.chat.id)
+        if check == 0:
+            bot.send_message(message.chat.id, "<i>Данная команда ещё не доступна</i>", parse_mode="HTML")
+        else:
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("Покормить", callback_data="feed"))
+            markup.add(types.InlineKeyboardButton("Развлечь", callback_data="funny"))
 
-        bot.send_message(message.chat.id, 'Доступные действия:', reply_markup=markup)
+            bot.send_message(message.chat.id, 'Доступные действия:', reply_markup=markup)
+    except:
+        bot.send_message(message.chat.id, texts("action_responses/menuifdead"))
 
 
 @bot.message_handler(commands=['contact'])     #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
@@ -302,7 +305,13 @@ def amuse_time_push(id):    #запись времени начала развл
     time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
     push_smth('temp_timestamp', time, id)
 
-
+def if_alive(id):
+    try:
+        temp = get_smth('id', id)
+        r = 1
+    except:
+        r = 0
+    return r
 
 
 
@@ -320,13 +329,15 @@ def buttons_callback(callback):
         if n == 6:
             feed(callback.message.chat.id)
         if n in [2, 3, 4, 5, 6, 8]:
-            make_action(callback.message, n, True)
+            if if_alive(callback.message.chat.id) == 1:
+                make_action(callback.message, n, True)
         else:
             make_action(callback.message, n, False)
 
 
     if callback.data == "feed":
         feed(callback.message.chat.id)
+
     if callback.data == "funny":
         fun_choice(callback.message.chat.id)
 
