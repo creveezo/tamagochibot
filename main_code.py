@@ -57,27 +57,16 @@ def randomizer(file):
 
 
 def amusement_choice(type, message):
-    last_amusement = get_smth("last_amuse_type", message.chat.id)
-    if last_amusement == "film":
-        time = 3
-    elif last_amusement == "youtube":
-        time = 2
-    else:
-        time = 1.5
-    if time_check("amuse", time, message.chat.id) == 0:
-        bot.send_message(message.chat.id, "Прошло недостаточно времени, пожалуйста, попробуйте позже.")
-    else:
-        kind = randomizer(f'amusement/{type}_kind')
-        cringe = randomizer(f'amusement/{type}_cringe')
-        evil = randomizer(f'amusement/{type}_evil')
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(kind, callback_data="kind_1"))
-        markup.add(types.InlineKeyboardButton(cringe, callback_data="cringe_1"))
-        markup.add(types.InlineKeyboardButton(evil, callback_data="evil_1"))
-        print(kind, cringe, evil)
-        push_smth("temp_name",f'{kind}/{cringe}/{evil}', message.chat.id)
+    kind = randomizer(f'amusement/{type}_kind')
+    cringe = randomizer(f'amusement/{type}_cringe')
+    evil = randomizer(f'amusement/{type}_evil')
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(kind, callback_data="kind_1"))
+    markup.add(types.InlineKeyboardButton(cringe, callback_data="cringe_1"))
+    markup.add(types.InlineKeyboardButton(evil, callback_data="evil_1"))
+    push_smth("temp_name",f'{kind}/{cringe}/{evil}', message.chat.id)
 
-        bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
+    bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
 
 
 def fun_choice(message):
@@ -115,15 +104,16 @@ def menu_message(message):
         bot.send_message(message.chat.id, texts("action_responses/menuifdead"))
 
 
-@bot.message_handler(commands=['contact'])     #ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
+@bot.message_handler(commands=['contact'])     # ответ на команду /contact - соо от бота + пересылка соо от пользователя создателям
 def contact_message(message):
     bot.send_message(message.chat.id, texts("commands/contact"))
     @bot.message_handler(content_types=['text'])
-    def get_text_messages(message):             #надо всё-таки решить, что эта команда делает и кому сообщение отправляет (или записывает ответы пользователей?)
+    def get_text_messages(message):
         bot.reply_to(message, 'Ваше сообщение доставлено!')
         bot.send_message(416671069, f'{message.text}, от {user(message)}; ID: {message.from_user.id}')
 
-@bot.message_handler(commands=['newgame'])    #ответ на команду /newgame 
+
+@bot.message_handler(commands=['newgame'])    # ответ на команду /newgame
 def newgame_message(message):
 
     conn = sqlite3.connect('tbdatabase.db')
@@ -168,7 +158,7 @@ def newgame_message(message):
     for k in range(0,3):    # обратный отсчет
         i -= 1
         bot.send_message(message.chat.id, str(i))
-        #time.sleep(1)
+        time.sleep(1)
     bot.send_message(message.chat.id, "Поехали!")
     make_action(message, 1, False)
 
@@ -178,8 +168,6 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
         bot.send_message(message.chat.id, texts("lines_direct/10_1"), parse_mode="HTML")
     if n == 11:
         push_smth("training_complete", 1, message.chat.id)
-        print('обучаловка пройдена')
-    # надо не забыть присылать фоту если мы делаем ретерн чойс как у действия 6
     if n in [6, 10]:
         return choice(message, n)
     if n > 12:
@@ -187,7 +175,7 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
     else:
         if n == 4:
             bot.send_message(message.chat.id, "Ну, конечно. На обратной стороне было неприлично много писанины:")
-            #time.sleep(2)
+            time.sleep(2)
         if NeedPhoto:
             try:
                 photo = open(f'scenario/photos/{n}.png', 'rb')
@@ -198,7 +186,7 @@ def make_action(message, n: int, NeedPhoto: bool):    # считывает ли�
             if n == 4:
                 bot.send_message(message.chat.id, texts("lines_direct/4_1"))
 
-            #time.sleep(5)
+            time.sleep(5)
         markup = types.InlineKeyboardMarkup()
         if n != 12:
             markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
@@ -304,6 +292,7 @@ def fed_check(fed, id):    # проверка накормленности и п
         push_smth('lives', lives, id)
     return fcheck
 
+
 def time_check(category, time, id):    # проверка, прошло ли time часов с момента в amuse_timestamp и stage_timestamp
     time = time * 60*60                # time пишите в часах пожалуйста. category - либо amuse, либо stage
     curr = datetime.now()
@@ -350,19 +339,18 @@ def buttons_callback(callback):
         else:
             make_action(callback.message, n, False)
 
-
     if callback.data == "feed":
         feed(callback.message.chat.id)
 
     if callback.data == "funny":
         fun_choice(callback.message.chat.id)
 
-
     amusement = ["film", "book", "music", "youtube", "series", "cartoon", "game"]
     for amuse in amusement:
         if callback.data.find(amuse) != -1:
             push_smth("last_amuse_type", amuse, callback.message.chat.id)
             if callback.data == f"{amuse}_starting":
+                amuse_time_push(callback.message.chat.id)
                 response = texts(f'amusement/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                                       text=joiner('lines_direct/6', f'amusement/{callback.data}_editor'))
@@ -372,7 +360,18 @@ def buttons_callback(callback):
                 push_smth('temp1', response, callback.message.chat.id)
                 make_action(callback.message, n, False)
             else:
-                amusement_choice(amuse, callback.message)
+                last_amusement = get_smth("last_amuse_type", callback.message.chat.id)
+                if last_amusement == "film":
+                    time = 3
+                elif last_amusement == "youtube":
+                    time = 2
+                else:
+                    time = 1.5
+                if time_check("amuse", time, callback.message.chat.id) == 0:
+                    bot.send_message(callback.message.chat.id,
+                                     "Прошло недостаточно времени, пожалуйста, попробуйте позже.")
+                else:
+                    amusement_choice(amuse, callback.message)
 
 
     scale_types = ["kind", "cringe", "evil"]
@@ -388,16 +387,16 @@ def buttons_callback(callback):
                                       text=joiner(texts('lines_direct/10'), invert(f'lines_buttons/c{n}')[callback.data], False))
                 response = get_smth('temp1', callback.message.chat.id)
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
+                amuse_time_push(callback.message.chat.id)
                 amuse = get_smth('last_amuse_type', callback.message.chat.id)
                 amusement_choice(amuse, callback.message)
-                print(f'print n: {n}')
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
+
             else:
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
                 scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
-                print(callback.data)
                 if callback.data[-1] == "1":
                     amuse_time_push(callback.message.chat.id)
                     names = list(get_smth("temp_name", callback.message.chat.id).split("/"))
