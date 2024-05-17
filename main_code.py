@@ -5,10 +5,11 @@ import time
 import random
 from datetime import datetime
 from telebot.types import InputFile
+from decouple import config
 
-catgirl = '6968907461:AAG5j6gXd2B5WAsCL6jDC8_85I4YzskXUKg'
-normal = '6595427590:AAEWir1FTJpltWi2B1SIbBokhs7rSRSe7Rk'
-bot = telebot.TeleBot(normal)
+catgirl = config('CATGIRL')
+normal = config('NORMAL')
+bot = telebot.TeleBot(catgirl)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
