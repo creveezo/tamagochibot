@@ -9,7 +9,7 @@ from decouple import config
 
 catgirl = config('CATGIRL')
 normal = config('NORMAL')
-bot = telebot.TeleBot(catgirl)
+bot = telebot.TeleBot(normal)
 
 def user(message):  # получаем имя пользователя
     return " ".join(filter(lambda x:x, [message.from_user.first_name, message.from_user.last_name]))
