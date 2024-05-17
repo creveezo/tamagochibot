@@ -220,7 +220,7 @@ def push_smth(column, value, id):   #записать значение в бд
     conn.close()
 
 
-def feed(id):   # кормление
+def feed(id):   # кормление 
     fed = get_smth('fed_timestamp', id)
     trcheck = get_smth('training_complete', id)
     if trcheck == 0:
@@ -230,12 +230,16 @@ def feed(id):   # кормление
     if fcheck == 'NO':
         count = get_smth('feedings_till_update', id)
         count -= 1
+        ifdemo = 0    #233, 236, 241, 242: демо-строки
         if count == 0:
             count = update_stage(id)
+            ifdemo = 1
         fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
         push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
         bot.send_message(id, texts("action_responses/fed"))
+        if ifdemo == 1:
+            bot.send_message(id, texts("for_demo/thanks"), parse_mode='HTML')
     if fcheck == 'YES':
         bot.send_message(id, texts("action_responses/cant_feed"))
     if fcheck == 'DEATH':
