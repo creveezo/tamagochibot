@@ -14,25 +14,29 @@ bot = telebot.TeleBot(catgirl)
 def feed(id):
     fed = get_smth('fed_timestamp', id)
     trcheck = get_smth('training_complete', id)
+    ifupgrade = 0    # переходим ли на следующий этап
+
     if trcheck == 0:
         fcheck = 'NO'
+
     if trcheck == 1:
         fcheck = fed_check(fed, id)
+
     if fcheck == 'NO':
         count = get_smth('feedings_till_update', id)
         count -= 1
-        ifdemo = 0    # 4 демо-строки
         if count == 0:
             count = update_stage(id)
-            ifdemo = 1
-        fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
-        push_smth('fed_timestamp', fednow, id)
+            ifupgrade = 1
+        if ifupgrade == 0:
+            bot.send_message(id, texts("action_responses/fed"))
+            fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+            push_smth('fed_timestamp', fednow, id)
         push_smth('feedings_till_update', count, id)
-        bot.send_message(id, texts("action_responses/fed"))
-        if ifdemo == 1:
-            bot.send_message(id, texts("for_demo/thanks"), parse_mode='HTML')
+        
     if fcheck == 'YES':
         bot.send_message(id, texts("action_responses/cant_feed"))
+
     if fcheck == 'DEATH':
         conn = sqlite3.connect('tbdatabase.db')
         cur = conn.cursor()
@@ -40,6 +44,8 @@ def feed(id):
         conn.commit()
         cur.close()
         conn.close()
+
+    return ifupgrade
 
 
 # апдейт стадии - перед началом следующего этапа проверять

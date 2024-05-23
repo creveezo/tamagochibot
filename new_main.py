@@ -24,6 +24,7 @@ def start_message(message):
 # ответ на команду /menu
 @bot.message_handler(commands=['menu'])
 def menu_message(message):
+    # сделать так чтобы человек не могу вызвать меню во время сюжета
     try:
         check = get_smth("training_complete", message.chat.id)
         if check == 0:
@@ -121,7 +122,10 @@ def buttons_callback(callback):
             make_action(callback.message, n, False)
 
     if callback.data == "feed":
-        feed(callback.message.chat.id)
+        c = feed(callback.message.chat.id)
+        if c == 1:
+            print('вот тут новый этап будет')
+            # новый этап
 
     if callback.data == "funny":
         fun_choice(callback.message.chat.id)
