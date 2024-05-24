@@ -7,6 +7,7 @@ from helpedit_funcs import *
 from amusement_funcs import *
 from feeding_funcs import *
 from actionmaking_funcs import *
+from checking_funcs import *
 
 
 catgirl = config('CATGIRL')

@@ -81,11 +81,3 @@ def choice(message, n):
     for var, cb in texts(f"lines_buttons/c{n}").items():
         markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
     bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup)
-
-
-def if_alive(id):
-    try:
-        get_smth('id', id)
-        return 1
-    except Exception:
-        return 0
