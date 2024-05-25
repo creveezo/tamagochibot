@@ -24,7 +24,7 @@ def make_action(message, n: int, NeedPhoto: bool):
     else:
         if n == 4:
             bot.send_message(message.chat.id, "Ну, конечно. На обратной стороне было неприлично много писанины:")
-            time.sleep(2)
+            # time.sleep(2)
         if NeedPhoto:
             try:
                 photo = open(f'scenario/photos/{n}.png', 'rb')
@@ -35,7 +35,7 @@ def make_action(message, n: int, NeedPhoto: bool):
             if n == 4:
                 bot.send_message(message.chat.id, texts("lines_direct/4_1"))
 
-            time.sleep(5)
+            # time.sleep(5)
         markup = types.InlineKeyboardMarkup()
         if n != 12:
             markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))

@@ -60,7 +60,7 @@ def newgame_message(message):
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS users \
                 (id varchar(16) PRIMARY KEY, stage int, feedings_till_update int, action_number int, \
-                kind_count_loc int, evil_count_loc int, cringe_count_loc int, \
+                kind_count_loc int, evil_count_loc int, cringe_count_loc int, main_loc varchar(10),\
                 kind_count_abs int, evil_count_abs int, cringe_count_abs int, \
                 lives int, fed_timestamp varchar(30), \
                 temp1 varchar(50), temp2 varchar(50), temp_name varchar(200), \
@@ -68,14 +68,14 @@ def newgame_message(message):
                 training_complete int)')
     cur.execute('INSERT INTO users \
                 (id, stage, feedings_till_update, action_number, \
-                kind_count_loc, evil_count_loc, cringe_count_loc, \
+                kind_count_loc, evil_count_loc, cringe_count_loc, main_loc, \
                 kind_count_abs, evil_count_abs, cringe_count_abs, \
                 lives, fed_timestamp, \
                 temp1, temp2, temp_name, \
                 last_amuse_type, amuse_timestamp, stage_timestamp, \
                 training_complete) \
                 VALUES (?, 0, 2, 1, \
-                0, 0, 0, \
+                0, 0, 0, 0, \
                 0, 0, 0, \
                 3, 0, \
                 0, 0, 0, \
@@ -83,7 +83,7 @@ def newgame_message(message):
                 0) \
                 ON CONFLICT (id) DO UPDATE SET \
                 id = ?, stage = 0, feedings_till_update = 2, action_number = 1, \
-                kind_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, \
+                kind_count_loc = 0, evil_count_loc = 0, cringe_count_loc = 0, main_loc = 0, \
                 kind_count_abs = 0, evil_count_abs = 0, cringe_count_abs = 0, \
                 lives = 3, fed_timestamp = 0, \
                 temp1 = 0, temp2 = 0, temp_name = 0, \
@@ -98,7 +98,7 @@ def newgame_message(message):
     for _ in range(0, 3):    # обратный отсчет
         i -= 1
         bot.send_message(message.chat.id, str(i))
-        time.sleep(1)
+        # time.sleep(1)
     bot.send_message(message.chat.id, "Поехали!")
     make_action(message, 1, False)
 

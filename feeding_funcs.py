@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime
 from decouple import config
 from helpedit_funcs import get_smth, push_smth, texts
+from checking_funcs import push_main_loc
 
 
 catgirl = config('CATGIRL')
@@ -63,6 +64,7 @@ def update_stage(id):
     time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
     push_smth('stage_timestamp', time, id)
     push_smth('action_number', 1, id)
+    push_main_loc(id)
     for scale in ['kind', 'cringe', 'evil']:
         scale_loc = get_smth(f'{scale}_count_loc', id)
         scale_abs = get_smth(f'{scale}_count_abs', id)

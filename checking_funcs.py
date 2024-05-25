@@ -1,4 +1,4 @@
-from helpedit_funcs import get_smth
+from helpedit_funcs import get_smth, push_smth
 
 def if_alive(id):
     try:
@@ -16,3 +16,16 @@ def if_plot_now(id):
         else:
             ans = 1
     return ans
+
+def push_main_loc(id):
+    main_loc = ''
+    loc_kind = get_smth('kind_count_loc', id)
+    loc_evil = get_smth('evil_count_loc', id)
+    loc_cringe = get_smth('cringe_count_loc', id)
+    if loc_kind > loc_evil and loc_kind >= loc_cringe:
+        main_loc = 'kind'
+    elif loc_evil > loc_kind and loc_evil >= loc_cringe:
+        main_loc = 'evil'
+    elif (loc_kind == loc_evil and loc_kind >= loc_cringe) or (loc_cringe > loc_kind and loc_cringe > loc_evil):
+        main_loc = 'cringe'
+    push_smth('main_loc', main_loc, id)
