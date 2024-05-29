@@ -14,7 +14,7 @@ bot = telebot.TeleBot(catgirl)
 # считывает линейные действия
 def make_action(message, n: int, NeedPhoto: bool):
     if n == 10:
-        bot.send_message(message.chat.id, texts("lines_direct/10_1"), parse_mode="HTML")
+        bot.send_message(message.chat.id, texts("0/lines_direct/10_1"), parse_mode="HTML")
     if n == 11:
         push_smth("training_complete", 1, message.chat.id)
     if n in [6, 10]:
@@ -27,16 +27,31 @@ def make_action(message, n: int, NeedPhoto: bool):
             # time.sleep(2)
         if NeedPhoto:
             try:
-                photo = open(f'scenario/photos/{n}.png', 'rb')
+                photo = open(f'scenario/0/photos/{n}.png', 'rb')
                 bot.send_photo(message.chat.id, photo)
             except Exception:
-                bot.send_animation(message.chat.id, InputFile(f'scenario/photos/{n}.mp4'))
+                bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}.mp4'))
 
             if n == 4:
-                bot.send_message(message.chat.id, texts("lines_direct/4_1"))
+                bot.send_message(message.chat.id, texts("0/lines_direct/4_1"))
 
             # time.sleep(5)
         markup = types.InlineKeyboardMarkup()
         if n != 12:
-            markup.add(types.InlineKeyboardButton(texts(f"lines_buttons/b{n}"), callback_data="next"))
-        bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")
+            markup.add(types.InlineKeyboardButton(texts(f"0/lines_buttons/b{n}"), callback_data="next"))
+        bot.send_message(message.chat.id, texts(f"0/lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")
+
+
+def make_action1(message, n: int, NeedPhoto: bool):
+    if n == 1:
+        return choice(message, n)
+    if NeedPhoto:
+        try:
+            photo = open(f'scenario/1/photos/{n}.png', 'rb')
+            bot.send_photo(message.chat.id, photo)
+        except Exception:
+            bot.send_animation(message.chat.id, InputFile(f'scenario/1/photos/{n}.mp4'))
+        # time.sleep(5)
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(texts(f"1/lines_buttons/b{n}"), callback_data="next"))
+    bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")

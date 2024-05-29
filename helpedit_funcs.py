@@ -77,7 +77,15 @@ def push_smth(column, value, id):
 
 
 def choice(message, n):
+    stage = get_smth("stage", message.id)
     markup = types.InlineKeyboardMarkup()
-    for var, cb in texts(f"lines_buttons/c{n}").items():
-        markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
-    bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup)
+    if stage == 1 and n == 1:
+        photo = open(f'scenario/1/photos/{n}.png', 'rb')
+        state = get_smth("main_loc", message.id)
+        for var, cb in texts(f"{stage}/lines_buttons/c{n}_{state}").items():
+            markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
+        bot.send_photo(message.chat.id, photo, reply_markup=markup)
+    else:
+        for var, cb in texts(f"{stage}/lines_buttons/c{n}").items():
+            markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
+        bot.send_message(message.chat.id, texts(f"{stage}/lines_direct/{n}"), reply_markup=markup)

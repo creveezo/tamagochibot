@@ -123,10 +123,18 @@ def buttons_callback(callback):
             make_action(callback.message, n, False)
 
     if callback.data == "feed":
-        c = feed(callback.message.chat.id)
-        if c == 1:
-            print('вот тут новый этап будет')
-            # новый этап
+        plot = if_plot_now(callback.message.chat.id)
+        if plot == 1:
+            bot.send_message(callback.message.chat.id,
+                             "Ты чего, какой кормить?! У тебя сюжет тут вовсю идёт.")
+        else:
+            c = feed(callback.message.chat.id)
+            if c == 1:
+                print('вот тут новый этап будет')
+                i = get_smth('stage', callback.message.chat.id)
+                if i == 1:
+                    make_action1(callback.message, 1, True)
+                # новый этап
 
     if callback.data == "funny":
         fun_choice(callback.message.chat.id)
@@ -182,6 +190,18 @@ def buttons_callback(callback):
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
                 scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
+                n = get_smth('action_number', callback.message.chat.id)
+                stage = get_smth("stage", callback.message.chat.id)
+                if stage == 1 and n == 1:
+                    state = get_smth("main_loc", callback.message.chat.id)
+                    bot.send_message(callback.message.chat.id, texts(f'1/lines_buttons/1_{state}_{scale}'))
+                    # не ебу как эта тварь себя поведет
+                    bot.edit_message_caption(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                             caption=invert(f'lines_buttons/c{n}_state')[callback.data])
+                    photo = open(f'scenario/1/photos/2.png', 'rb')
+                    bot.send_photo(callback.message.chat.id, photo)
+                    #time.sleep(2)
+                    make_action1(callback.message, 2, False)
                 if callback.data[-1] == "1":
                     amuse_time_push(callback.message.chat.id)
                     names = list(get_smth("temp_name", callback.message.chat.id).split("/"))
