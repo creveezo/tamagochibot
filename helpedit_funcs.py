@@ -77,11 +77,11 @@ def push_smth(column, value, id):
 
 
 def choice(message, n):
-    stage = get_smth("stage", message.id)
+    stage = get_smth('stage', message.chat.id)
     markup = types.InlineKeyboardMarkup()
     if stage == 1 and n == 1:
         photo = open(f'scenario/1/photos/{n}.png', 'rb')
-        state = get_smth("main_loc", message.id)
+        state = get_smth("main_loc", message.chat.id)
         for var, cb in texts(f"{stage}/lines_buttons/c{n}_{state}").items():
             markup.add(types.InlineKeyboardButton(str(var), callback_data=cb))
         bot.send_photo(message.chat.id, photo, reply_markup=markup)

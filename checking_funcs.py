@@ -15,6 +15,8 @@ def if_plot_now(id):
             ans = 0
         else:
             ans = 1
+    if stage == 1:
+        print('ДОБАВЬТЕ ЧЕ ПРОИСХОДИТЬ В ИФ ПЛОТ НАУ')
     return ans
 
 def push_main_loc(id):
