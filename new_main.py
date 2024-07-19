@@ -108,9 +108,9 @@ def buttons_callback(callback):
 
     if callback.data == "next":
         n = get_smth('action_number', callback.message.chat.id)
-
+        stage = get_smth('stage', callback.message.chat.id)
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                              text=joiner(f'lines_direct/{n}', f'lines_buttons/b{n}'), parse_mode="HTML")
+                              text=joiner(f'{stage}/lines_direct/{n}', f'{stage}/lines_buttons/b{n}'), parse_mode="HTML")
         n += 1
         push_smth('action_number', n, callback.message.chat.id)
 
@@ -147,7 +147,7 @@ def buttons_callback(callback):
                 amuse_time_push(callback.message.chat.id)
                 response = texts(f'amusement/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                                      text=joiner('lines_direct/6', f'amusement/{callback.data}_editor'))
+                                      text=joiner('0/lines_direct/6', f'amusement/{callback.data}_editor'))
                 n = get_smth('action_number', callback.message.chat.id)
                 n += 1
                 push_smth('action_number', n, callback.message.chat.id)
@@ -170,14 +170,15 @@ def buttons_callback(callback):
     scale_types = ["kind", "cringe", "evil"]
     for scale in scale_types:
         if callback.data.find(scale) != -1:
+            stage = get_smth("stage", callback.message.chat.id)
             if callback.data == f"{scale}_starting":
                 scale_count = get_smth(f'{scale}_count_loc', callback.message.chat.id)
                 scale_count += 3
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
                 n = get_smth('action_number', callback.message.chat.id)
-                res = texts(f'temp/{callback.data}')
+                res = texts(f'{stage}/temp/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                                      text=joiner(texts('lines_direct/10'), invert(f'lines_buttons/c{n}')[callback.data], False))
+                                      text=joiner(texts(f'{stage}/lines_direct/10'), invert(f'{stage}/lines_buttons/c{n}')[callback.data], False))
                 response = get_smth('temp1', callback.message.chat.id)
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
                 amuse_time_push(callback.message.chat.id)
@@ -191,13 +192,12 @@ def buttons_callback(callback):
                 scale_count += int(callback.data[-1])
                 push_smth(f'{scale}_count_loc', scale_count, callback.message.chat.id)
                 n = get_smth('action_number', callback.message.chat.id)
-                stage = get_smth("stage", callback.message.chat.id)
                 if stage == 1 and n == 1:
                     state = get_smth("main_loc", callback.message.chat.id)
                     bot.send_message(callback.message.chat.id, texts(f'1/lines_buttons/1_{state}_{scale}'))
                     # не ебу как эта тварь себя поведет
                     bot.edit_message_caption(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                                             caption=invert(f'lines_buttons/c{n}_state')[callback.data])
+                                             caption=invert(f'1/lines_buttons/c{n}_state')[callback.data])
                     photo = open(f'scenario/1/photos/2.png', 'rb')
                     bot.send_photo(callback.message.chat.id, photo)
                     #time.sleep(2)
