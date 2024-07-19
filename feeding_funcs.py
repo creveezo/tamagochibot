@@ -30,9 +30,9 @@ def feed(id):
             count = update_stage(id)
             ifupgrade = 1
         if ifupgrade == 0:
-            bot.send_message(id, texts("action_responses/fed"))
             fednow = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
             push_smth('fed_timestamp', fednow, id)
+        bot.send_message(id, texts("action_responses/fed"))
         push_smth('feedings_till_update', count, id)
         
     if fcheck == 'YES':
