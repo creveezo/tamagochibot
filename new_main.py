@@ -44,12 +44,12 @@ def menu_message(message):
 # пересылка соо от пользователя создателям
 @bot.message_handler(commands=['contact'])
 def contact_message(message):
-    bot.send_message(message.chat.id, texts("commands/contact"))
+    msg = bot.send_message(message.chat.id, texts("commands/contact"))
+    bot.register_next_step_handler(msg, contact_message1)
 
-    @bot.message_handler(content_types=['text'])
-    def get_text_messages(message):
-        bot.reply_to(message, 'Ваше сообщение доставлено!')
-        bot.send_message(416671069, f'{message.text}, от {user(message)}; ID: {message.from_user.id}')
+def contact_message1(message):
+    bot.reply_to(message, 'Ваше сообщение доставлено!')
+    bot.send_message(416671069, f'{message.text}, от {user(message)}; ID: {message.from_user.id}')
 
 
 # ответ на команду /newgame
@@ -101,6 +101,12 @@ def newgame_message(message):
         # time.sleep(1)
     bot.send_message(message.chat.id, "Поехали!")
     make_action(message, 1, False)
+
+
+#ответ на любой другой текст
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    bot.send_message(message.chat.id, "тихо.")
 
 
 @bot.callback_query_handler(func=lambda callback: True)
