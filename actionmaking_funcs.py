@@ -43,7 +43,7 @@ def make_action(message, n: int, NeedPhoto: bool):
 
 
 def make_action1(message, n: int, NeedPhoto: bool):
-    if n == 1:
+    if n in [1, 2, 4]:
         return choice(message, n)
     if NeedPhoto:
         try:
@@ -54,4 +54,4 @@ def make_action1(message, n: int, NeedPhoto: bool):
         # time.sleep(5)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(texts(f"1/lines_buttons/b{n}"), callback_data="next"))
-    bot.send_message(message.chat.id, texts(f"lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")
+    bot.send_message(message.chat.id, texts(f"1/lines_direct/{n}"), reply_markup=markup, parse_mode="HTML")

@@ -1,0 +1,3 @@
+посмотреть Ютубчик;youtube_starting
+глянуть сериал;series_starting
+поиграть во что-нибудь;game_starting
