@@ -16,6 +16,10 @@ def if_plot_now(id):
         else:
             ans = 1
     if stage == 1:
+        if n == 2000:
+            ans = 0
+        else:
+            ans = 1
         print('ДОБАВЬТЕ ЧЕ ПРОИСХОДИТЬ В ИФ ПЛОТ НАУ')
     return ans
 

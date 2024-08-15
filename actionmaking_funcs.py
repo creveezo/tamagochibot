@@ -14,6 +14,7 @@ bot = telebot.TeleBot(catgirl)
 # считывает линейные действия
 def make_action(message, n: int, NeedPhoto: bool):
     if n == 10:
+        bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}.mp4'))
         bot.send_message(message.chat.id, texts("0/lines_direct/10_1"), parse_mode="HTML")
     if n == 11:
         push_smth("training_complete", 1, message.chat.id)
@@ -26,12 +27,11 @@ def make_action(message, n: int, NeedPhoto: bool):
             bot.send_message(message.chat.id, "Ну, конечно. На обратной стороне было неприлично много писанины:")
             # time.sleep(2)
         if NeedPhoto:
-            try:
+            if n == 5:
+                bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}.mp4'))
+            else:
                 photo = open(f'scenario/0/photos/{n}.png', 'rb')
                 bot.send_photo(message.chat.id, photo)
-            except Exception:
-                bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}.mp4'))
-
             if n == 4:
                 bot.send_message(message.chat.id, texts("0/lines_direct/4_1"))
 

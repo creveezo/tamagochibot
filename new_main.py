@@ -200,6 +200,7 @@ def buttons_callback(callback):
                 res = texts(f'{stage}/temp/{callback.data}')
                 bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
                                       text=joiner(texts(f'{stage}/lines_direct/10'), invert(f'{stage}/lines_buttons/c{n}')[callback.data], False))
+                bot.send_animation(callback.message.chat.id, InputFile(f'scenario/0/photos/{scale}_starting.mp4'))
                 response = get_smth('temp1', callback.message.chat.id)
                 bot.send_message(callback.message.chat.id, f'{res} Ну, малявка, давай что-нибудь {response}')
                 amuse_time_push(callback.message.chat.id)

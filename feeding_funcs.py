@@ -80,9 +80,9 @@ def fed_check(fed, id):
     fed = datetime.strptime(fed[:19], '%Y-%m-%d %H:%M:%S')
     diff = curr - fed
     diffsec = diff.seconds + diff.days * 60*60*24
-    if diffsec <= 43200:
+    if diffsec <= 60*60*4:
         fcheck = 'YES'
-    if diffsec > 43200:
+    if diffsec > 60*60*4:
         fcheck = 'NO'
     if diffsec > 86400:
         lives = get_smth('lives', id)
