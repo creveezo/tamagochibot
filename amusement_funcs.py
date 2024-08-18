@@ -48,8 +48,8 @@ def amusement_choice(type, message):
 
 
 def fun_choice(message):
-    n = get_smth('action_number', message.chat.id)
-    stage = get_smth('stage', message.chat.id)
+    n = get_smth('action_number', message)
+    stage = get_smth('stage', message)
     markup = types.InlineKeyboardMarkup()
     if n == 4 and stage == 1:
         markup.add(types.InlineKeyboardButton("*пойти домой*", callback_data="go_home"))
