@@ -4,12 +4,42 @@ from datetime import datetime
 from decouple import config
 import random
 import time
+
+from feeding_funcs import time_check
 from helpedit_funcs import push_smth, get_smth
 
 catgirl = config('CATGIRL')
 normal = config('NORMAL')
 bot = telebot.TeleBot(catgirl)
 
+def amuse_list(shortlist, text, message):
+    markup = types.InlineKeyboardMarkup()
+    if shortlist == "full":
+        markup.add(types.InlineKeyboardButton("Смотреть фильм", callback_data="film"))
+        markup.add(types.InlineKeyboardButton("Читать книги", callback_data="book"))
+        markup.add(types.InlineKeyboardButton("Слушать музыку", callback_data="music"))
+        markup.add(types.InlineKeyboardButton("Смотреть ютубчик", callback_data="youtube"))
+        markup.add(types.InlineKeyboardButton("Смотреть сериальчик", callback_data="series"))
+        markup.add(types.InlineKeyboardButton("Смотреть мультики", callback_data="cartoon"))
+        markup.add(types.InlineKeyboardButton("Играть в игры", callback_data="game"))
+    else:
+        for a in shortlist:
+            if a == "f":
+                markup.add(types.InlineKeyboardButton("Смотреть фильм", callback_data="film"))
+            elif a == "b":
+                markup.add(types.InlineKeyboardButton("Читать книги", callback_data="book"))
+            elif a == "m":
+                markup.add(types.InlineKeyboardButton("Слушать музыку", callback_data="music"))
+            elif a == "y":
+                markup.add(types.InlineKeyboardButton("Смотреть ютубчик", callback_data="youtube"))
+            elif a == "s":
+                markup.add(types.InlineKeyboardButton("Смотреть сериальчик", callback_data="series"))
+            elif a == "c":
+                markup.add(types.InlineKeyboardButton("Смотреть мультики", callback_data="cartoon"))
+            elif a == "g":
+                markup.add(types.InlineKeyboardButton("Играть в игры", callback_data="game"))
+
+    bot.send_message(message, text, reply_markup=markup)
 
 def randomizer(file):
     with open(f"scenario/{file}.txt", "r", encoding="UTF-8") as file:
@@ -29,20 +59,8 @@ def amusement_choice(type, message):
 
     n = get_smth('action_number', message.chat.id)
     stage = get_smth('stage', message.chat.id)
-    if n == 4 and stage == 1:
-        if type == "game":
-            bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
-            bot.send_message(message.chat.id, "Сори, ты будешь просто наблюдать")
-        else:
-            bot.send_message(message.chat.id, 'Пожалуй, остановлюсь на...', reply_markup=markup)
-        # time.sleep(3)
-        if type == "youtube":
-            temp = "два часа"
-        else:
-            temp = "полтора часа"
-
-        bot.send_message(message.chat.id, f"Теперь у ребят есть чем заняться! Возвращайся через {temp}, "
-                                          f"нажав на кнопку “развлечения” в меню")
+    if n == 4 and stage == 1 and type != "game":
+        bot.send_message(message.chat.id, 'Пожалуй, остановлюсь на...', reply_markup=markup)
     else:
         bot.send_message(message.chat.id, 'Что у нас на сегодня?', reply_markup=markup)
 
@@ -52,22 +70,29 @@ def fun_choice(message):
     stage = get_smth('stage', message)
     markup = types.InlineKeyboardMarkup()
     if n == 4 and stage == 1:
-        markup.add(types.InlineKeyboardButton("*пойти домой*", callback_data="go_home"))
-        markup.add(types.InlineKeyboardButton("*найти чем еще развлечься*", callback_data="stay_in_lab"))
+        last_amusement = get_smth("last_amuse_type", message)
+        if last_amusement == "film":
+            time = 3
+        elif last_amusement == "youtube":
+            time = 2
+        else:
+            time = 1.5
 
-        bot.send_message(message, 'Замечательно, профессор будет в восторге. Что бы теперь поделать?',
-                         reply_markup=markup)
+        if time_check("amuse", time, message) == 0:
+            bot.send_message(message,
+                             "Ребята всё ещё заняты. Пожалуйста, попробуйте позже.")
+
+        else:
+            markup.add(types.InlineKeyboardButton("*пойти домой*", callback_data="go_home"))
+            markup.add(types.InlineKeyboardButton("*найти чем еще развлечься*", callback_data="stay_in_lab"))
+
+            bot.send_message(message, 'Замечательно, профессор будет в восторге. Что бы теперь поделать?',
+                             reply_markup=markup)
 
     else:
-        markup.add(types.InlineKeyboardButton("Смотреть фильм", callback_data="film"))
-        markup.add(types.InlineKeyboardButton("Читать книги", callback_data="book"))
-        markup.add(types.InlineKeyboardButton("Слушать музыку", callback_data="music"))
-        markup.add(types.InlineKeyboardButton("Смотреть ютубчик", callback_data="youtube"))
-        markup.add(types.InlineKeyboardButton("Смотреть сериальчик", callback_data="series"))
-        markup.add(types.InlineKeyboardButton("Смотреть мультики", callback_data="cartoon"))
-        markup.add(types.InlineKeyboardButton("Играть в игры", callback_data="game"))
+        amuse_list("full", 'Чем сегодня займёмся?', message)
 
-        bot.send_message(message, 'Чем сегодня займёмся?', reply_markup=markup)
+
 
 
 # запись времени начала развлечения в бд

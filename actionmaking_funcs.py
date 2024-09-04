@@ -14,8 +14,8 @@ bot = telebot.TeleBot(catgirl)
 # считывает линейные действия
 def make_action(message, n: int, NeedPhoto: bool):
     if n == 10:
-        bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}_1.mp4'))
         bot.send_message(message.chat.id, texts("0/lines_direct/10_1"), parse_mode="HTML")
+        bot.send_animation(message.chat.id, InputFile(f'scenario/0/photos/{n}_1.mp4'))
     if n == 11:
         push_smth("training_complete", 1, message.chat.id)
     if n in [6, 10]:

@@ -154,6 +154,11 @@ def buttons_callback(callback):
     if callback.data == "go_home":
         ... #блять думать нахуй
 
+    if callback.data == "stay_in_lab":
+        amuse_list("full", "Хм, чем же заняться?", callback.message.chat.id)
+        n = get_smth('action_number', callback.message.chat.id)
+        push_smth('action_number', n+1, callback.message.chat.id)
+
     amusement = ["film", "book", "music", "youtube", "series", "cartoon", "game"]
     for amuse in amusement:
         if callback.data.find(amuse) != -1:
@@ -245,18 +250,27 @@ def buttons_callback(callback):
                     else:
                         curr_name = names[2]
 
-                    bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
-                                          text=joiner('Что у нас на сегодня?', curr_name, False))
-                    n = get_smth("action_number", callback.message.chat.id)
                     amuse = get_smth('last_amuse_type', callback.message.chat.id)
+
+                    bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.message_id,
+                                        text=joiner('Что у нас на сегодня?', curr_name, False))
+
                     if amuse == "film":
                         length = "3 часа"
                     elif amuse == "youtube":
                         length = "2 часа"
                     else:
                         length = "полтора часа"
-                    bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {length}...")
-                    if n == 11:
+                    if stage == 1 and n == 4:
+                        if amuse == "game":
+                            bot.send_message(callback.message.chat.id, "Сори, ты будешь просто наблюдать.")
+                            # time.sleep(3)
+                        bot.send_message(callback.message.chat.id,
+                                         f"Теперь у ребят есть чем заняться! Возвращайся через {length}, "
+                                         f"нажав на кнопку “развлечения” в меню")
+                    else:
+                        bot.send_message(callback.message.chat.id, f"— Итак, теперь нам есть, на что потратить {length}...")
+                    if stage == 0 and n == 11:
                         make_action(callback.message, n, False)
 
 
